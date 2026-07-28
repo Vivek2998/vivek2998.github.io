@@ -287,7 +287,13 @@ export const skills: SkillGroup[] = [
     label: 'Robotics & Motion',
     accent: 'rose',
     when: 'Picked up on the robotics side — bringing up drives and reading the bus when an axis misbehaves.',
-    items: ['Actin', 'Elmo Motion Control', 'EC-Engineer', 'EC-Inspector'],
+    items: [
+      'EtherCAT',
+      'Actin',
+      'Elmo Motion Control',
+      'EC-Engineer',
+      'EC-Inspector',
+    ],
   },
   {
     label: 'Tooling & Practice',
