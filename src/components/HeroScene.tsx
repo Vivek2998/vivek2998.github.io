@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
+import { globePins, type GlobePin } from '../content'
 
-type Point = { x: number; y: number; z: number }
+type Vec = { x: number; y: number; z: number }
 
 /** Even coverage of a sphere — the Fibonacci lattice, no clustering at the poles. */
-function sphereLattice(count: number): Point[] {
-  const points: Point[] = []
+function sphereLattice(count: number): Vec[] {
+  const points: Vec[] = []
   const golden = Math.PI * (3 - Math.sqrt(5))
 
   for (let i = 0; i < count; i++) {
@@ -16,19 +17,43 @@ function sphereLattice(count: number): Point[] {
   return points
 }
 
-const POINT_COUNT = 132
-/** Chord length below which two lattice points get wired together. */
-const LINK_DISTANCE = 0.42
+/** Geographic coordinates onto the unit sphere. Longitude 0 faces +z. */
+function latLonToVec(lat: number, lon: number): Vec {
+  const phi = (lat * Math.PI) / 180
+  const lambda = (lon * Math.PI) / 180
+  return {
+    x: Math.cos(phi) * Math.sin(lambda),
+    y: Math.sin(phi),
+    z: Math.cos(phi) * Math.cos(lambda),
+  }
+}
 
-/**
- * A slowly rotating point-sphere, drawn with hand-rolled 3D projection on a 2D
- * canvas.
- *
- * Three.js would be ~600 kB for what amounts to rotating 132 points, so the
- * maths is inline instead. Because the sphere is rigid, the links between
- * points never change — they are computed once and only re-projected per frame,
- * which keeps the loop to a few hundred operations.
- */
+/** Latitude circles and meridians — what makes it read as a globe rather than
+    an abstract point cloud. */
+function buildGraticule() {
+  const lines: Vec[][] = []
+  const STEP = 6
+
+  for (let lat = -60; lat <= 60; lat += 30) {
+    const ring: Vec[] = []
+    for (let lon = -180; lon <= 180; lon += STEP) ring.push(latLonToVec(lat, lon))
+    lines.push(ring)
+  }
+
+  for (let lon = -180; lon < 180; lon += 30) {
+    const meridian: Vec[] = []
+    for (let lat = -90; lat <= 90; lat += STEP) meridian.push(latLonToVec(lat, lon))
+    lines.push(meridian)
+  }
+
+  return lines
+}
+
+const POINT_COUNT = 150
+const AUTO_SPIN = 0.0014
+/** How long after letting go before the globe starts turning on its own again. */
+const IDLE_BEFORE_RESUME = 2200
+
 export function HeroScene({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -38,18 +63,9 @@ export function HeroScene({ className }: { className?: string }) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const points = sphereLattice(POINT_COUNT)
-
-    // Rigid body: wire up neighbours once rather than every frame.
-    const links: Array<[number, number]> = []
-    for (let i = 0; i < points.length; i++) {
-      for (let j = i + 1; j < points.length; j++) {
-        const dx = points[i].x - points[j].x
-        const dy = points[i].y - points[j].y
-        const dz = points[i].z - points[j].z
-        if (Math.hypot(dx, dy, dz) < LINK_DISTANCE) links.push([i, j])
-      }
-    }
+    const lattice = sphereLattice(POINT_COUNT)
+    const graticule = buildGraticule()
+    const pinVectors = globePins.map((p) => latLonToVec(p.lat, p.lon))
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -57,13 +73,18 @@ export function HeroScene({ className }: { className?: string }) {
     let height = 0
     let radius = 0
     let frame = 0
-    let running = true
-    // Rotation carries on across pauses so the sphere never snaps back.
-    let angle = reduced ? 0.6 : 0
-    let pointerX = 0
-    let pointerY = 0
-    let tiltX = 0
-    let tiltY = 0
+    let running = false
+
+    // Start with India toward the viewer, so the "you are here" pin is visible.
+    let yaw = -1.35
+    let pitch = -0.35
+    let spinVelocity = 0
+    let dragging = false
+    let lastPointer = { x: 0, y: 0 }
+    let lastInteraction = 0
+    let hovered = -1
+    // Screen positions from the last frame, for hit-testing the pins.
+    let pinScreen: Array<{ x: number; y: number; front: boolean }> = []
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect()
@@ -73,71 +94,165 @@ export function HeroScene({ className }: { className?: string }) {
       canvas.width = Math.round(width * dpr)
       canvas.height = Math.round(height * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      radius = Math.min(width, height) * 0.38
+      radius = Math.min(width, height) * 0.36
+    }
+
+    const rotate = (v: Vec) => {
+      const cosY = Math.cos(yaw)
+      const sinY = Math.sin(yaw)
+      const cosX = Math.cos(pitch)
+      const sinX = Math.sin(pitch)
+      const x1 = v.x * cosY - v.z * sinY
+      const z1 = v.x * sinY + v.z * cosY
+      const y2 = v.y * cosX - z1 * sinX
+      const z2 = v.y * sinX + z1 * cosX
+      return { x: x1, y: y2, z: z2 }
+    }
+
+    const project = (v: Vec) => {
+      const r = rotate(v)
+      // z runs -1..1, so the divisor stays comfortably positive.
+      const scale = (1 / (2.6 - r.z)) * 2.6
+      return {
+        x: width / 2 + r.x * radius * scale,
+        y: height / 2 + r.y * radius * scale,
+        z: r.z,
+        depth: (r.z + 1) / 2,
+      }
     }
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height)
       if (radius <= 0) return
 
-      const cx = width / 2
-      const cy = height / 2
-
-      const cosA = Math.cos(angle)
-      const sinA = Math.sin(angle)
-      const cosT = Math.cos(tiltX)
-      const sinT = Math.sin(tiltX)
-
-      // Project every point once, then reuse for links and dots.
-      const projected = points.map((p) => {
-        // Yaw about Y, then a small pitch about X driven by the pointer.
-        const x1 = p.x * cosA - p.z * sinA
-        const z1 = p.x * sinA + p.z * cosA
-        const y2 = p.y * cosT - z1 * sinT
-        const z2 = p.y * sinT + z1 * cosT
-
-        // Perspective divide: z2 runs -1..1, so the divisor stays comfortably > 0.
-        const scale = 1 / (2.6 - z2)
-        return {
-          x: cx + x1 * radius * scale * 2.6 + tiltY * 18,
-          y: cy + y2 * radius * scale * 2.6,
-          depth: (z2 + 1) / 2, // 0 = far, 1 = near
-        }
-      })
-
-      // Links first, so the dots sit on top.
+      // Graticule — front hemisphere brighter, back barely there.
       ctx.lineWidth = 1
-      for (const [a, b] of links) {
-        const pa = projected[a]
-        const pb = projected[b]
-        const depth = (pa.depth + pb.depth) / 2
-        if (depth < 0.28) continue // hide the far hemisphere's clutter
-        ctx.strokeStyle = `rgba(56, 225, 212, ${(depth - 0.28) * 0.30})`
+      for (const line of graticule) {
+        let started = false
         ctx.beginPath()
-        ctx.moveTo(pa.x, pa.y)
-        ctx.lineTo(pb.x, pb.y)
+        for (const v of line) {
+          const p = project(v)
+          if (p.z < -0.15) {
+            started = false
+            continue
+          }
+          if (started) ctx.lineTo(p.x, p.y)
+          else {
+            ctx.moveTo(p.x, p.y)
+            started = true
+          }
+        }
+        ctx.strokeStyle = 'rgba(14, 140, 130, 0.20)'
         ctx.stroke()
       }
 
-      for (const p of projected) {
-        const size = 0.7 + p.depth * 2.0
+      // Lattice dots as surface texture.
+      for (const v of lattice) {
+        const p = project(v)
+        if (p.z < 0) continue
         ctx.beginPath()
-        ctx.arc(p.x, p.y, size, 0, Math.PI * 2)
-        // Near points warm toward violet, far points stay cyan and dim.
-        const mix = Math.round(124 * p.depth)
-        ctx.fillStyle = `rgba(${56 + mix * 0.4}, ${225 - mix * 0.5}, ${212 + mix * 0.3}, ${
-          0.15 + p.depth * 0.75
-        })`
+        ctx.arc(p.x, p.y, 0.5 + p.depth * 1.3, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(28, 26, 23, ${0.05 + p.depth * 0.16})`
         ctx.fill()
       }
+
+      // Pins, back to front so nearer ones overlap the rest.
+      pinScreen = pinVectors.map((v) => {
+        const p = project(v)
+        return { x: p.x, y: p.y, front: p.z > 0.06 }
+      })
+
+      const order = pinVectors
+        .map((v, i) => ({ i, z: project(v).z }))
+        .sort((a, b) => a.z - b.z)
+
+      for (const { i, z } of order) {
+        if (z <= 0.06) continue
+        const pin = globePins[i]
+        const s = pinScreen[i]
+        const isHome = pin.home
+        const active = hovered === i
+        // Fade pins out as they approach the limb.
+        const alpha = Math.min(1, (z - 0.06) * 4)
+
+        const colour = isHome ? '107, 79, 224' : '201, 62, 99'
+        const size = active ? 6 : isHome ? 5 : 4
+
+        // Halo
+        ctx.beginPath()
+        ctx.arc(s.x, s.y, size * (active ? 3.2 : 2.4), 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${colour}, ${alpha * (active ? 0.22 : 0.12)})`
+        ctx.fill()
+
+        ctx.beginPath()
+        ctx.arc(s.x, s.y, size, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${colour}, ${alpha})`
+        ctx.fill()
+
+        ctx.beginPath()
+        ctx.arc(s.x, s.y, size, 0, Math.PI * 2)
+        ctx.strokeStyle = `rgba(250, 247, 241, ${alpha * 0.9})`
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+
+        drawLabel(pin, s.x, s.y, alpha, active)
+      }
+    }
+
+    const drawLabel = (
+      pin: GlobePin,
+      x: number,
+      y: number,
+      alpha: number,
+      active: boolean,
+    ) => {
+      // Only the hovered pin gets its place line; the rest show just a name so
+      // six labels at once don't turn into soup.
+      const lines = active ? [pin.label, pin.place] : [pin.label]
+      if (!active && alpha < 0.55) return
+
+      ctx.font =
+        '500 12px "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace'
+      ctx.textBaseline = 'middle'
+
+      const widths = lines.map((l) => ctx.measureText(l).width)
+      const boxW = Math.max(...widths) + 16
+      const boxH = lines.length * 15 + 9
+      // Flip the label to the left when it would run off the right edge.
+      const flip = x + 14 + boxW > width
+      const bx = flip ? x - 14 - boxW : x + 14
+      const by = y - boxH / 2
+
+      ctx.beginPath()
+      ctx.roundRect(bx, by, boxW, boxH, 6)
+      ctx.fillStyle = `rgba(250, 247, 241, ${alpha * (active ? 0.97 : 0.82)})`
+      ctx.fill()
+      ctx.strokeStyle = `rgba(226, 220, 207, ${alpha})`
+      ctx.lineWidth = 1
+      ctx.stroke()
+
+      lines.forEach((line, i) => {
+        ctx.fillStyle =
+          i === 0
+            ? `rgba(28, 26, 23, ${alpha})`
+            : `rgba(107, 101, 91, ${alpha})`
+        ctx.fillText(line, bx + 8, by + 12 + i * 15)
+      })
     }
 
     const tick = () => {
       if (!running) return
-      angle += 0.0016
-      // Ease the pointer tilt so it glides rather than tracks exactly.
-      tiltX += (pointerY * 0.32 - tiltX) * 0.045
-      tiltY += (pointerX - tiltY) * 0.045
+
+      if (!dragging) {
+        const idle = performance.now() - lastInteraction > IDLE_BEFORE_RESUME
+        if (Math.abs(spinVelocity) > 0.00005) {
+          yaw += spinVelocity
+          spinVelocity *= 0.94 // inertia
+        } else if (idle) {
+          yaw += AUTO_SPIN
+        }
+      }
+
       draw()
       frame = requestAnimationFrame(tick)
     }
@@ -153,51 +268,127 @@ export function HeroScene({ className }: { className?: string }) {
       cancelAnimationFrame(frame)
     }
 
+    const localPoint = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      return { x: event.clientX - rect.left, y: event.clientY - rect.top }
+    }
+
+    const onPointerDown = (event: PointerEvent) => {
+      dragging = true
+      lastPointer = localPoint(event)
+      lastInteraction = performance.now()
+      spinVelocity = 0
+      canvas.setPointerCapture(event.pointerId)
+      canvas.style.cursor = 'grabbing'
+    }
+
     const onPointerMove = (event: PointerEvent) => {
-      pointerX = (event.clientX / window.innerWidth) * 2 - 1
-      pointerY = (event.clientY / window.innerHeight) * 2 - 1
+      const p = localPoint(event)
+
+      if (dragging) {
+        const dx = p.x - lastPointer.x
+        const dy = p.y - lastPointer.y
+        yaw += dx * 0.006
+        // Clamp the tilt so the globe never flips past its poles.
+        pitch = Math.max(-1.1, Math.min(1.1, pitch + dy * 0.005))
+        spinVelocity = dx * 0.006
+        lastPointer = p
+        lastInteraction = performance.now()
+        if (reduced) draw()
+        return
+      }
+
+      // Hit-test the pins; nearest front-facing one within 18px wins.
+      let best = -1
+      let bestDistance = 18
+      pinScreen.forEach((s, i) => {
+        if (!s.front) return
+        const d = Math.hypot(s.x - p.x, s.y - p.y)
+        if (d < bestDistance) {
+          bestDistance = d
+          best = i
+        }
+      })
+
+      if (best !== hovered) {
+        hovered = best
+        canvas.style.cursor = best >= 0 ? 'pointer' : 'grab'
+        if (reduced) draw()
+      }
+    }
+
+    const endDrag = (event: PointerEvent) => {
+      if (!dragging) return
+      dragging = false
+      lastInteraction = performance.now()
+      canvas.style.cursor = hovered >= 0 ? 'pointer' : 'grab'
+      if (canvas.hasPointerCapture(event.pointerId)) {
+        canvas.releasePointerCapture(event.pointerId)
+      }
+    }
+
+    const onPointerLeave = () => {
+      hovered = -1
+      canvas.style.cursor = 'grab'
+      if (reduced) draw()
     }
 
     const onVisibility = () => (document.hidden ? stop() : start())
 
     resize()
+    canvas.style.cursor = 'grab'
+
     const resizeObserver = new ResizeObserver(() => {
       resize()
-      if (reduced) draw()
+      if (reduced || !running) draw()
     })
     resizeObserver.observe(canvas)
 
-    // Stop burning frames when the hero is scrolled past.
+    // Don't burn frames once the hero is scrolled past.
     const io = new IntersectionObserver(
       ([entry]) => (entry.isIntersecting ? start() : stop()),
       { threshold: 0 },
     )
     io.observe(canvas)
 
-    if (reduced) {
-      running = false
-      draw()
-    } else {
-      window.addEventListener('pointermove', onPointerMove, { passive: true })
-      document.addEventListener('visibilitychange', onVisibility)
-      frame = requestAnimationFrame(tick)
-    }
+    canvas.addEventListener('pointerdown', onPointerDown)
+    canvas.addEventListener('pointermove', onPointerMove)
+    canvas.addEventListener('pointerup', endDrag)
+    canvas.addEventListener('pointercancel', endDrag)
+    canvas.addEventListener('pointerleave', onPointerLeave)
+    document.addEventListener('visibilitychange', onVisibility)
+
+    if (reduced) draw()
+    else start()
 
     return () => {
       stop()
       resizeObserver.disconnect()
       io.disconnect()
-      window.removeEventListener('pointermove', onPointerMove)
+      canvas.removeEventListener('pointerdown', onPointerDown)
+      canvas.removeEventListener('pointermove', onPointerMove)
+      canvas.removeEventListener('pointerup', endDrag)
+      canvas.removeEventListener('pointercancel', endDrag)
+      canvas.removeEventListener('pointerleave', onPointerLeave)
       document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [])
 
   return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden
-      className={className}
-      /* Sized by CSS; the effect syncs the backing store to match. */
-    />
+    <>
+      <canvas ref={canvasRef} aria-hidden className={className} />
+
+      {/* The globe is decorative canvas, so its content is given to assistive
+          tech in text form here. */}
+      <p className="sr-only">
+        An interactive globe marking companies I'd like to work with:{' '}
+        {globePins
+          .filter((p) => !p.home)
+          .map((p) => `${p.label} in ${p.place}`)
+          .join(', ')}
+        . It also marks {globePins.find((p) => p.home)?.place.toLowerCase()},
+        Gurugram, India.
+      </p>
+    </>
   )
 }

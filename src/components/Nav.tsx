@@ -51,7 +51,7 @@ export function Nav() {
     <>
       <a
         href="#about"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-100 focus:rounded-lg focus:bg-slate-raised focus:px-4 focus:py-2 focus:text-sm"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-100 focus:rounded-lg focus:bg-surface-raised/60 focus:px-4 focus:py-2 focus:text-sm"
       >
         Skip to content
       </a>
@@ -59,7 +59,7 @@ export function Nav() {
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
           scrolled
-            ? 'border-b border-hairline bg-void/72 backdrop-blur-xl'
+            ? 'border-b border-hairline bg-paper/72 backdrop-blur-xl'
             : 'border-b border-transparent'
         }`}
       >
@@ -130,7 +130,7 @@ export function Nav() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-55 bg-void/95 backdrop-blur-2xl md:hidden"
+            className="fixed inset-0 z-55 bg-paper/95 backdrop-blur-2xl md:hidden"
           >
             <ul className="flex h-full flex-col items-center justify-center gap-2">
               {sections.map(({ id, label }, i) => (

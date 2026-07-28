@@ -1,15 +1,20 @@
 import type { ReactNode } from 'react'
 
-type Props = {
-  href: string
+type Common = {
   children: ReactNode
   /** Solid fill for the primary call to action, outline for the secondary one. */
   variant?: 'solid' | 'outline'
   className?: string
 }
 
+type Props = Common &
+  (
+    | ({ as?: 'a'; href: string } & React.AnchorHTMLAttributes<HTMLAnchorElement>)
+    | ({ as: 'button'; href?: never } & React.ButtonHTMLAttributes<HTMLButtonElement>)
+  )
+
 /**
- * The site's one button.
+ * The site's one button, rendered as either a link or a real <button>.
  *
  * The hover does three things at once instead of just scaling: a light sweep
  * crosses the face, the label slides left, and the arrow leaves to the right
@@ -18,27 +23,27 @@ type Props = {
  * motion rather than a fade.
  */
 export function ActionButton({
-  href,
   children,
   variant = 'solid',
   className = '',
+  as = 'a',
+  ...rest
 }: Props) {
   const solid = variant === 'solid'
 
-  return (
-    <a
-      href={href}
-      className={`group relative inline-flex items-center overflow-hidden rounded-full px-6 py-3 text-sm font-medium transition-[transform,border-color,color] duration-300 ease-out active:scale-[0.98] ${
-        solid
-          ? 'bg-signal text-void'
-          : 'border border-hairline text-ink-muted hover:border-signal/45 hover:text-ink'
-      } ${className}`}
-    >
+  const classes = `group relative inline-flex items-center overflow-hidden rounded-full px-6 py-3 text-sm font-medium transition-[transform,border-color,color] duration-300 ease-out active:scale-[0.98] ${
+    solid
+      ? 'bg-signal text-surface-raised'
+      : 'border border-hairline text-ink-muted hover:border-signal/50 hover:text-ink'
+  } ${className}`
+
+  const inner = (
+    <>
       {/* Light sweep. Starts off the left edge, crosses on hover. */}
       <span
         aria-hidden
         className={`pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full ${
-          solid ? 'via-white/35' : 'via-signal/12'
+          solid ? 'via-white/30' : 'via-signal/10'
         }`}
       />
 
@@ -53,6 +58,22 @@ export function ActionButton({
           <Arrow className="absolute inset-0 -translate-x-full transition-transform duration-300 ease-out group-hover:translate-x-0" />
         </span>
       </span>
+    </>
+  )
+
+  if (as === 'button') {
+    const buttonProps = rest as React.ButtonHTMLAttributes<HTMLButtonElement>
+    return (
+      <button type="button" className={classes} {...buttonProps}>
+        {inner}
+      </button>
+    )
+  }
+
+  const anchorProps = rest as React.AnchorHTMLAttributes<HTMLAnchorElement>
+  return (
+    <a className={classes} {...anchorProps}>
+      {inner}
     </a>
   )
 }

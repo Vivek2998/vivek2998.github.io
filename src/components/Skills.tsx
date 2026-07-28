@@ -51,7 +51,7 @@ export function Skills() {
                 {group.items.map((item) => (
                   <li
                     key={item}
-                    className="rounded-lg border border-hairline bg-slate-raised/30 px-3 py-1.5 text-sm text-ink-muted transition-all duration-200 hover:-translate-y-0.5 hover:border-[color-mix(in_oklab,var(--accent)_45%,transparent)] hover:text-ink"
+                    className="rounded-lg border border-hairline bg-surface-raised/30 px-3 py-1.5 text-sm text-ink-muted transition-all duration-200 hover:-translate-y-0.5 hover:border-[color-mix(in_oklab,var(--accent)_45%,transparent)] hover:text-ink"
                   >
                     {item}
                   </li>

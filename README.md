@@ -2,9 +2,10 @@
 
 My portfolio. **Live at [vivek2998.github.io](https://vivek2998.github.io/)**.
 
-Built with React 19, Vite, Tailwind CSS v4 and Framer Motion. Dark-first, with the
-heavier visual effects — glassmorphism, aurora gradients, 3D — used as accents
-rather than as the whole design.
+Built with React 19, Vite, Tailwind CSS v4 and Framer Motion. Light, on a warm
+bone ground rather than plain white, with the heavier visual effects —
+glassmorphism, aurora gradients, 3D — used as accents rather than as the whole
+design.
 
 ## Editing the content
 
@@ -41,21 +42,31 @@ publishes `dist/` to GitHub Pages. No manual step.
 | `src/content.ts` | All site copy and data |
 | `src/index.css` | Design tokens, base styles, the `panel` / `glass` / `hairline-grid` utilities |
 | `src/components/Aurora.tsx` | Drifting background gradients + grid — the only source of the "glass" look |
-| `src/components/HeroScene.tsx` | Rotating point-sphere, hand-rolled 3D projection on a 2D canvas |
+| `src/components/HeroScene.tsx` | The draggable globe — hand-rolled 3D projection on a 2D canvas |
 | `src/components/Reveal.tsx` | Scroll-into-view animation wrapper |
 | `src/components/Section.tsx` | Shared numbered section chrome |
+| `src/components/ContactForm.tsx` | The form that swaps in for the social links |
 
 ### On the 3D
 
-The hero sphere is ~130 points projected by hand rather than by a 3D library —
-Three.js would have cost roughly 600 kB to rotate a few points. Because the sphere is
-rigid, the links between points are computed once at startup and only re-projected
-each frame. It pauses when scrolled out of view or when the tab is hidden, and
-renders a single static frame when `prefers-reduced-motion` is set.
+The hero globe projects a graticule, a point lattice and a handful of location pins
+by hand on a 2D canvas rather than pulling in a 3D library — Three.js would have cost
+roughly 600 kB to spin a sphere. Drag to rotate; it carries inertia, and picks the
+auto-spin back up once you've left it alone. It pauses when scrolled out of view or
+when the tab is hidden, and renders a single static frame under
+`prefers-reduced-motion`. The pins are listed in text for screen readers, since the
+canvas itself says nothing.
+
+### On the contact form
+
+GitHub Pages is static, so it cannot send mail. `contactForm.endpoint` in
+`src/content.ts` is empty by default and the form falls back to composing a
+`mailto:` — it works with no service at all. Point it at a Formspree or Web3Forms
+endpoint to have submissions delivered instead.
 
 ## Previous version
 
-The original 2023 site, hand-written without a framework, is archived at
+The original 2023 site, hand-written with no build step, is archived at
 [Vivek2998/personal_portfolio](https://github.com/Vivek2998/personal_portfolio)
 (tag `v1.0-original`) and still live
 [here](https://vivek2998.github.io/personal_portfolio/).

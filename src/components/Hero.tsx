@@ -46,10 +46,11 @@ export function Hero() {
       id="home"
       className="relative flex min-h-[100svh] items-center overflow-hidden pt-24 pb-16"
     >
-      {/* The 3D bit — behind the copy, generous on desktop, restrained on phones. */}
-      <HeroScene className="pointer-events-none absolute top-1/2 right-[-18%] h-[min(88vh,760px)] w-[min(88vh,760px)] -translate-y-1/2 opacity-45 sm:right-[-8%] sm:opacity-60 lg:right-[2%] lg:opacity-85" />
+      {/* The globe. Draggable from lg upward, where it has its own column and
+          can't swallow taps meant for the copy or the buttons. */}
+      <HeroScene className="pointer-events-none absolute top-1/2 right-[-18%] h-[min(88vh,760px)] w-[min(88vh,760px)] -translate-y-1/2 opacity-60 sm:right-[-8%] sm:opacity-75 lg:right-[1%] lg:opacity-100 lg:pointer-events-auto" />
 
-      <div className="relative mx-auto w-full max-w-6xl px-5 sm:px-8">
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-5 sm:px-8">
         <motion.div
           initial={reduced ? false : { opacity: 0, y: 26 }}
           animate={{ opacity: 1, y: 0 }}
@@ -70,7 +71,7 @@ export function Hero() {
 
           <p className="mt-5 font-mono text-[clamp(1rem,2.6vw,1.4rem)] text-ink-muted">
             <span className="text-ink-faint">{'>'} </span>
-            <span className="text-signal text-glow">{typed}</span>
+            <span className="text-signal">{typed}</span>
             {!reduced && (
               <motion.span
                 aria-hidden
@@ -94,6 +95,12 @@ export function Hero() {
 
           <p className="mt-12 font-mono text-xs text-ink-faint">
             {profile.disciplines.join('  ·  ')}
+          </p>
+
+          {/* Only worth saying where the globe is actually draggable. */}
+          <p className="mt-4 hidden font-mono text-xs text-ink-faint lg:block">
+            <span className="text-signal">↻</span> Drag the globe — the pins are
+            where I'd like this to lead
           </p>
         </motion.div>
       </div>

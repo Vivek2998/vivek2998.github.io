@@ -28,6 +28,50 @@ export const profile = {
   ],
 } as const
 
+/**
+ * Markers on the hero globe: places I'd like my work to end up, plus where I
+ * am now.
+ *
+ * NVIDIA and AMD are both headquartered in Santa Clara, a couple of kilometres
+ * apart — at globe scale that is the same pixel, so they share one marker
+ * rather than being nudged to coordinates neither of them occupies.
+ */
+export type GlobePin = {
+  lat: number
+  lon: number
+  label: string
+  place: string
+  /** The "you are here" marker, drawn in a different colour. */
+  home?: boolean
+}
+
+export const globePins: GlobePin[] = [
+  { lat: 32.78, lon: -96.8, label: 'Texas Instruments', place: 'Dallas, USA' },
+  { lat: 37.37, lon: -121.98, label: 'NVIDIA · AMD', place: 'Santa Clara, USA' },
+  { lat: 24.78, lon: 120.99, label: 'TSMC', place: 'Hsinchu, Taiwan' },
+  { lat: 35.68, lon: 139.69, label: 'Honda', place: 'Tokyo, Japan' },
+  { lat: 37.28, lon: 127.05, label: 'Samsung', place: 'Suwon, South Korea' },
+  { lat: 28.46, lon: 77.03, label: 'Gurugram', place: 'Where I am now', home: true },
+]
+
+/**
+ * Where the contact form posts.
+ *
+ * A site on GitHub Pages is static, so it can't send mail itself — that needs a
+ * third-party form endpoint. Until one is configured the form still works: it
+ * composes the message into a mailto: instead, which needs no service at all.
+ *
+ * To switch it on, set `endpoint` to either
+ *   Formspree   https://formspree.io/f/<your-id>
+ *   Web3Forms   https://api.web3forms.com/submit   (and set accessKey)
+ */
+export const contactForm = {
+  endpoint: '',
+  accessKey: '',
+  /** How long the success message stays before the socials come back. */
+  successHoldMs: 25000,
+} as const
+
 export const links = {
   github: 'https://github.com/Vivek2998',
   linkedin: 'https://www.linkedin.com/in/vk30',
@@ -230,7 +274,7 @@ export const rebuild = {
     year: '2023',
     caption: 'Hand-written, no build step',
     image: '/compare/2023.webp',
-    alt: 'The 2023 portfolio: a light page with a centred heading and large empty space below.',
+    alt: 'The 2023 portfolio: a plain white page with a centred heading and a large empty gap below it.',
     body: `I wrote every line of it myself — HTML, CSS and JavaScript in one
       1,100-line file, with Bootstrap 5, the Argon design system, Swiper and
       jQuery pulled in from CDNs. No bundler, no generator. It was genuinely the
@@ -240,7 +284,7 @@ export const rebuild = {
     year: '2026',
     caption: 'Rebuilt, with AI in the loop',
     image: '/compare/2026.webp',
-    alt: 'The 2026 portfolio: a dark page with a rotating point-sphere and a monospace heading.',
+    alt: 'The 2026 portfolio: a warm bone page with an interactive globe, a monospace subtitle and a structured hero.',
     body: `I move a lot faster now, and I don't pretend I did this one alone. But
       speed was never the thing that was missing.`,
   },

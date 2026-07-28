@@ -20,14 +20,14 @@ function Node({ entry }: { entry: TimelineEntry }) {
 
   if (entry.kind === 'work') {
     return (
-      <span className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 border-pulse bg-void" />
+      <span className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 border-pulse bg-paper" />
     )
   }
 
   // Education and the GATE year read as waypoints, not milestones: smaller,
   // hollow, and set in the muted ink so the eye slides past them.
   return (
-    <span className="mt-[0.4rem] h-2 w-2 shrink-0 rotate-45 border border-ink-faint bg-void" />
+    <span className="mt-[0.4rem] h-2 w-2 shrink-0 rotate-45 border border-ink-faint bg-paper" />
   )
 }
 
@@ -90,7 +90,7 @@ export function Journey() {
       title="Journey"
       lead="Electronics to embedded to software — not a straight line, and better for it."
     >
-      <ol className="relative mx-auto max-w-3xl">
+      <ol className="relative max-w-3xl">
         {journey.map((entry, i) => {
           const isLast = i === journey.length - 1
           const major = entry.kind === 'work'

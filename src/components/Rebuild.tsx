@@ -45,13 +45,13 @@ function Compare() {
 
       {/* Year labels, each fading out as the handle passes over it. */}
       <span
-        className="pointer-events-none absolute top-3 left-3 rounded-full bg-void/70 px-3 py-1 font-mono text-[0.7rem] tracking-wide text-ink backdrop-blur-sm transition-opacity sm:top-4 sm:left-4"
+        className="pointer-events-none absolute top-3 left-3 rounded-full bg-paper/70 px-3 py-1 font-mono text-[0.7rem] tracking-wide text-ink backdrop-blur-sm transition-opacity sm:top-4 sm:left-4"
         style={{ opacity: position < 16 ? 0 : 1 }}
       >
         {before.year} · {before.caption}
       </span>
       <span
-        className="text-accent pointer-events-none absolute top-3 right-3 rounded-full bg-void/70 px-3 py-1 font-mono text-[0.7rem] tracking-wide backdrop-blur-sm transition-opacity sm:top-4 sm:right-4"
+        className="text-accent pointer-events-none absolute top-3 right-3 rounded-full bg-paper/70 px-3 py-1 font-mono text-[0.7rem] tracking-wide backdrop-blur-sm transition-opacity sm:top-4 sm:right-4"
         style={{ opacity: position > 84 ? 0 : 1 }}
       >
         {after.year} · {after.caption}
@@ -63,7 +63,7 @@ function Compare() {
         className="pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 bg-[var(--accent)]"
         style={{ left: `${position}%` }}
       >
-        <span className="absolute top-1/2 left-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--accent)] bg-void shadow-[0_0_24px_color-mix(in_oklab,var(--accent)_50%,transparent)]">
+        <span className="absolute top-1/2 left-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--accent)] bg-paper shadow-[0_0_24px_color-mix(in_oklab,var(--accent)_50%,transparent)]">
           <svg width="18" height="18" viewBox="0 0 18 18" className="text-accent">
             <path
               d="M7 5 4 9l3 4M11 5l3 4-3 4"
