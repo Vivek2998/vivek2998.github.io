@@ -1,5 +1,6 @@
 import { Section } from './Section'
 import { Reveal } from './Reveal'
+import { ActionButton } from './ActionButton'
 import { links, profile } from '../content'
 
 const socials = [
@@ -37,15 +38,9 @@ export function Contact() {
               </p>
             </div>
 
-            <a
-              href={`mailto:${links.email}`}
-              className="group inline-flex w-fit items-center gap-2 rounded-full bg-signal px-6 py-3 text-sm font-medium text-void transition-transform hover:scale-[1.02] active:scale-[0.99]"
-            >
+            <ActionButton href={`mailto:${links.email}`} className="w-fit">
               Say hello
-              <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden className="transition-transform group-hover:translate-x-0.5">
-                <path d="M2 7.5h10M8 3.5l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </svg>
-            </a>
+            </ActionButton>
           </div>
         </Reveal>
 

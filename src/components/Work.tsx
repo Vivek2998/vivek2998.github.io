@@ -139,10 +139,10 @@ function FeaturedCard({ project, step }: { project: Project; step: number }) {
 
 function CompactRow({ project, step }: { project: Project; step: number }) {
   return (
-    <Reveal step={step} as="article">
+    <Reveal step={step} as="article" className="h-full">
       <div
         style={{ '--accent': accentVar(project.accent) } as React.CSSProperties}
-        className="panel accent-card group relative p-6 transition-colors hover:accent-card-hover"
+        className="panel accent-card accent-sheen group relative flex h-full flex-col p-6 transition-colors hover:accent-card-hover"
       >
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h3 className="text-lg font-medium tracking-tight">{project.name}</h3>
@@ -157,9 +157,10 @@ function CompactRow({ project, step }: { project: Project; step: number }) {
           ))}
         </div>
 
-        <div className="mt-5">
-          <ProjectLinks project={project} />
-        </div>
+        {/* Pushes the links to a shared baseline across the row. */}
+        <div aria-hidden className="mt-5 flex-1" />
+
+        <ProjectLinks project={project} />
       </div>
     </Reveal>
   )

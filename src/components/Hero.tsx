@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { HeroScene } from './HeroScene'
+import { ActionButton } from './ActionButton'
 import { links, profile } from '../content'
 
 /** Types a word out, holds, deletes, moves on. */
@@ -85,22 +86,10 @@ export function Hero() {
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-3">
-            <a
-              href="#work"
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-signal px-6 py-3 text-sm font-medium text-void transition-transform hover:scale-[1.02] active:scale-[0.99]"
-            >
-              See the work
-              <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden className="transition-transform group-hover:translate-x-0.5">
-                <path d="M2 7.5h10M8 3.5l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </svg>
-            </a>
-
-            <a
-              href={`mailto:${links.email}`}
-              className="inline-flex items-center gap-2 rounded-full border border-hairline px-6 py-3 text-sm text-ink-muted transition-colors hover:border-signal/40 hover:text-ink"
-            >
+            <ActionButton href="#work">See the work</ActionButton>
+            <ActionButton href={`mailto:${links.email}`} variant="outline">
               Get in touch
-            </a>
+            </ActionButton>
           </div>
 
           <p className="mt-12 font-mono text-xs text-ink-faint">

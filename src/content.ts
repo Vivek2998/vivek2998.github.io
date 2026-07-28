@@ -43,9 +43,21 @@ export type TimelineEntry = {
   detail: string
   kind: 'work' | 'study' | 'break'
   current?: boolean
+  /** Shown as a small monospace chip on study entries — grade, score, etc. */
+  credential?: string
 }
 
-export const experience: TimelineEntry[] = [
+/**
+ * One spine, newest first — work, the GATE year and education all on the same
+ * line rather than in parallel columns.
+ *
+ * Education on its own reads as filler on an engineer's portfolio, so it isn't
+ * given its own section; it stays as context you pass on the way down, drawn
+ * compactly while roles get the full card. The section's claim is that the path
+ * wasn't a straight line, and a single interleaved timeline is what actually
+ * shows that.
+ */
+export const journey: TimelineEntry[] = [
   {
     period: 'Dec 2023 — Present',
     title: 'Testing Engineer',
@@ -81,29 +93,29 @@ export const experience: TimelineEntry[] = [
       took it through simulation and synthesis on Xilinx Vivado. Where the interest
       in things closer to the metal started.`,
   },
-]
-
-export const education: TimelineEntry[] = [
   {
     period: '2017 — Jun 2021',
     title: 'B.E., Electronics & Communication',
     org: 'Birla Institute of Technology, Mesra',
     kind: 'study',
-    detail: 'CGPA 6.98',
+    credential: 'CGPA 6.98',
+    detail: 'Four years of signals, circuits and communication theory.',
   },
   {
     period: '2015 — 2017',
     title: 'Intermediate, Science (Mathematics)',
     org: 'R. Lal College, Alinagar, Biharsharif',
     kind: 'study',
-    detail: '63%',
+    credential: '63%',
+    detail: '',
   },
   {
     period: '2014',
     title: 'Matriculation, Science',
     org: 'D.A.V. Public School, P.G.C., Biharsharif',
     kind: 'study',
-    detail: 'CGPA 8.8',
+    credential: 'CGPA 8.8',
+    detail: '',
   },
 ]
 
@@ -192,11 +204,12 @@ export const projects: Project[] = [
     name: 'personal_portfolio',
     accent: 'azure',
     year: '2023',
-    blurb: 'The first version of this site, hand-written without a framework.',
-    detail: `Plain HTML, CSS and JavaScript — no build step, no generator. Kept
+    blurb: 'The first version of this site, hand-written with no build step.',
+    detail: `Plain HTML, CSS and JavaScript with Bootstrap 5 and the Argon design
+      system on top — 1,100 lines in a single file, no bundler, no generator. Kept
       online as an archive, because the gap between it and what you're reading now
       is the honest version of the progress.`,
-    stack: ['HTML', 'CSS', 'JavaScript', 'Bootstrap'],
+    stack: ['HTML', 'CSS', 'JavaScript', 'Bootstrap 5', 'Argon', 'jQuery', 'Swiper'],
     repo: 'https://github.com/Vivek2998/personal_portfolio',
     demo: 'https://vivek2998.github.io/personal_portfolio/',
   },
@@ -215,12 +228,13 @@ export const rebuild = {
     honest CV I have.`,
   before: {
     year: '2023',
-    caption: 'Hand-written, no framework',
+    caption: 'Hand-written, no build step',
     image: '/compare/2023.webp',
     alt: 'The 2023 portfolio: a light page with a centred heading and large empty space below.',
-    body: `I wrote every line of it myself — plain HTML, CSS and JavaScript, no
-      generator, no build step. It was genuinely the ceiling of what I could
-      build at the time, and I was proud of it.`,
+    body: `I wrote every line of it myself — HTML, CSS and JavaScript in one
+      1,100-line file, with Bootstrap 5, the Argon design system, Swiper and
+      jQuery pulled in from CDNs. No bundler, no generator. It was genuinely the
+      ceiling of what I could build then, and I was proud of it.`,
   },
   after: {
     year: '2026',
@@ -242,27 +256,43 @@ export const rebuild = {
   },
 } as const
 
-export type SkillGroup = { label: string; items: string[]; accent: Accent }
+export type SkillGroup = {
+  label: string
+  items: string[]
+  accent: Accent
+  /** When I actually reach for this — a plain tag cloud says nothing on its own. */
+  when: string
+}
 
 export const skills: SkillGroup[] = [
   {
     label: 'Systems & Embedded',
     accent: 'amber',
+    when: 'When it has to boot the same way on every unit, every time.',
     items: ['Embedded Linux', 'Yocto / BitBake', 'Linux', 'Shell', 'Verilog HDL', 'VLSI'],
   },
   {
     label: 'Languages',
     accent: 'violet',
+    when: 'Picked per layer — Python near the device, TypeScript near the user.',
     items: ['Python', 'TypeScript', 'JavaScript', 'Java', 'C / C++', 'Dart', 'SQL'],
   },
   {
     label: 'Web',
     accent: 'teal',
+    when: 'When hardware work needs an interface someone can actually operate.',
     items: ['React', 'Astro', 'Node.js', 'Tailwind CSS', 'HTML', 'CSS'],
+  },
+  {
+    label: 'Robotics & Motion',
+    accent: 'rose',
+    when: 'Picked up on the robotics side — bringing up drives and reading the bus when an axis misbehaves.',
+    items: ['Actin', 'Elmo Motion Control', 'EC-Engineer', 'EC-Inspector'],
   },
   {
     label: 'Tooling & Practice',
     accent: 'azure',
+    when: 'The unglamorous half: proving it works and keeping it that way.',
     items: ['Test automation', 'Git', 'Vivado', 'PostgreSQL', 'MySQL', 'Power BI'],
   },
 ]
