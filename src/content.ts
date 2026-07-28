@@ -69,7 +69,7 @@ export const globePins: GlobePin[] = [
  * the honeypot field in ContactForm.
  */
 export const contactForm = {
-  endpoint: '',
+  endpoint: 'https://formspree.io/f/mqernnqy',
   /** How long the success message stays before the socials come back. */
   successHoldMs: 25000,
 } as const
