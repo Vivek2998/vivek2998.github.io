@@ -52,18 +52,28 @@ export function ContactForm({ onSent }: { onSent: () => void }) {
           name,
           email,
           message,
-          ...(contactForm.accessKey ? { access_key: contactForm.accessKey } : {}),
+          // Formspree reads _subject for the notification it sends on.
+          _subject: `Portfolio message from ${name}`,
         }),
       })
 
-      if (!response.ok) throw new Error(`Request failed (${response.status})`)
+      if (!response.ok) {
+        // Formspree reports problems as { errors: [{ message }] }; fall back to
+        // the status code when the body isn't what we expect.
+        const body = await response.json().catch(() => null)
+        const detail = Array.isArray(body?.errors)
+          ? body.errors.map((e: { message?: string }) => e.message).filter(Boolean).join('. ')
+          : ''
+        throw new Error(detail || `The form service returned ${response.status}`)
+      }
+
       onSent()
     } catch (err) {
       setStatus('error')
       setError(
         err instanceof Error
-          ? `${err.message}. You can email me directly instead.`
-          : 'Something went wrong. You can email me directly instead.',
+          ? `${err.message}.`
+          : 'Something went wrong sending that.',
       )
     }
   }
@@ -119,10 +129,11 @@ export function ContactForm({ onSent }: { onSent: () => void }) {
 
       {status === 'error' && (
         <p role="alert" className="text-xs leading-relaxed text-[var(--color-hue-rose)]">
-          {error}{' '}
+          {error} You can email me directly at{' '}
           <a href={`mailto:${links.email}`} className="underline">
             {links.email}
           </a>
+          .
         </p>
       )}
 

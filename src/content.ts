@@ -58,16 +58,18 @@ export const globePins: GlobePin[] = [
  * Where the contact form posts.
  *
  * A site on GitHub Pages is static, so it can't send mail itself — that needs a
- * third-party form endpoint. Until one is configured the form still works: it
- * composes the message into a mailto: instead, which needs no service at all.
+ * third-party form endpoint. Until one is set the form still works: it composes
+ * the message into a mailto: instead, so it's never a dead end.
  *
- * To switch it on, set `endpoint` to either
- *   Formspree   https://formspree.io/f/<your-id>
- *   Web3Forms   https://api.web3forms.com/submit   (and set accessKey)
+ * To switch on real delivery, paste the Formspree endpoint for the form:
+ *   https://formspree.io/f/<your-form-id>
+ *
+ * The id is not a secret — it ships in the client bundle by design, which is
+ * how every Formspree site works. Abuse is held off by their own filtering plus
+ * the honeypot field in ContactForm.
  */
 export const contactForm = {
   endpoint: '',
-  accessKey: '',
   /** How long the success message stays before the socials come back. */
   successHoldMs: 25000,
 } as const
