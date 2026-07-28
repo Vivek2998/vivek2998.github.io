@@ -2,7 +2,7 @@ import { useRef, type ReactNode } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { Section } from './Section'
 import { Reveal } from './Reveal'
-import { projects, type Project } from '../content'
+import { accentVar, projects, type Project } from '../content'
 
 /**
  * The second place 3D shows up: cards pitch and yaw toward the cursor.
@@ -45,7 +45,7 @@ function Tilt({ children, className = '' }: { children: ReactNode; className?: s
 
 function Badge({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded-full border border-hairline px-2.5 py-1 font-mono text-[0.68rem] text-ink-faint">
+    <span className="rounded-full border border-hairline px-2.5 py-1 font-mono text-[0.68rem] text-ink-faint transition-colors group-hover:border-[color-mix(in_oklab,var(--accent)_28%,transparent)]">
       {children}
     </span>
   )
@@ -67,7 +67,7 @@ function ProjectLinks({ project }: { project: Project }) {
           href={project.repo}
           target="_blank"
           rel="noreferrer"
-          className="group inline-flex items-center gap-1.5 font-mono text-xs text-ink-muted transition-colors hover:text-signal"
+          className="group inline-flex items-center gap-1.5 font-mono text-xs text-ink-muted transition-colors hover:text-[var(--accent)]"
         >
           Source
           <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden className="transition-transform group-hover:translate-x-px group-hover:-translate-y-px">
@@ -80,7 +80,7 @@ function ProjectLinks({ project }: { project: Project }) {
           href={project.demo}
           target="_blank"
           rel="noreferrer"
-          className="group inline-flex items-center gap-1.5 font-mono text-xs text-signal transition-colors hover:text-signal-bright"
+          className="text-accent group inline-flex items-center gap-1.5 font-mono text-xs transition-opacity hover:opacity-80"
         >
           Live
           <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden className="transition-transform group-hover:translate-x-px group-hover:-translate-y-px">
@@ -97,11 +97,9 @@ function FeaturedCard({ project, step }: { project: Project; step: number }) {
     <Reveal step={step} as="article">
       <Tilt className="h-full">
         <div
-          className="group glass relative flex h-full flex-col overflow-hidden p-7 sm:p-8"
-          style={{
-            backgroundImage:
-              'radial-gradient(420px circle at var(--mx,50%) var(--my,0%), color-mix(in oklab, var(--color-signal) 9%, transparent), transparent 62%)',
-          }}
+          /* --accent drives the heading, border, badges and sheen together. */
+          style={{ '--accent': accentVar(project.accent) } as React.CSSProperties}
+          className="group glass accent-card accent-sheen relative flex h-full flex-col overflow-hidden p-7 transition-colors hover:accent-card-hover sm:p-8"
         >
           <div className="flex items-start justify-between gap-4">
             <h3 className="text-xl font-semibold tracking-tight sm:text-2xl">
@@ -112,7 +110,7 @@ function FeaturedCard({ project, step }: { project: Project; step: number }) {
             </span>
           </div>
 
-          <p className="mt-3 text-[0.95rem] leading-relaxed text-signal/90">
+          <p className="text-accent mt-3 text-[0.95rem] leading-relaxed opacity-90">
             {project.blurb}
           </p>
 
@@ -142,13 +140,16 @@ function FeaturedCard({ project, step }: { project: Project; step: number }) {
 function CompactRow({ project, step }: { project: Project; step: number }) {
   return (
     <Reveal step={step} as="article">
-      <div className="panel group relative p-6 transition-colors hover:border-signal/30">
+      <div
+        style={{ '--accent': accentVar(project.accent) } as React.CSSProperties}
+        className="panel accent-card group relative p-6 transition-colors hover:accent-card-hover"
+      >
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h3 className="text-lg font-medium tracking-tight">{project.name}</h3>
           <span className="font-mono text-xs text-ink-faint">{project.year}</span>
         </div>
 
-        <p className="mt-2 text-sm text-ink-muted text-pretty">{project.blurb}</p>
+        <p className="text-accent mt-2 text-sm opacity-90 text-pretty">{project.blurb}</p>
 
         <div className="mt-4 flex flex-wrap gap-1.5">
           {project.stack.map((tech) => (
@@ -171,6 +172,7 @@ export function Work() {
   return (
     <Section
       id="work"
+      accent="teal"
       index="02"
       title="Selected work"
       lead="Things I've built — from Linux images that ship on hardware to a physics engine for school students."

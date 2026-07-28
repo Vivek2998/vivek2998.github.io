@@ -21,13 +21,15 @@
   --color-ink-muted: #93a3b8;
   --color-ink-faint: #5b6b80;
 
-  /* Accent ramp — everything glowing pulls from these */
+  /* Primary accent — nav, links, the through-line of the page */
   --color-signal: #38e1d4;
   --color-signal-bright: #5ef7e8;
   --color-signal-deep: #0e9c94;
   --color-pulse: #7c6cf5;
   --color-pulse-bright: #a394ff;
-  --color-ember: #f59e5b;
+  --color-ember: #f0a862;
+
+  /* The accent family lives in :root below, not here — see the note there. */
 
   --font-sans:
     'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -39,6 +41,25 @@
 
   --animate-drift: drift 24s ease-in-out infinite;
   --animate-flicker: flicker 4s ease-in-out infinite;
+}
+
+/* Accent family for per-card colour.
+
+   Six hues held at roughly equal lightness and chroma, so cards read as
+   distinctly different without any one of them jumping out of the palette.
+   A card sets --accent to one of these and its heading, border, badges and
+   cursor sheen all follow.
+
+   Deliberately NOT in @theme: these are only ever referenced through an inline
+   `var(--color-hue-*)`, which Tailwind's scanner can't see, so it would
+   tree-shake them straight back out of the build. */
+:root {
+  --color-hue-teal: #38e1d4;
+  --color-hue-violet: #8b7cf6;
+  --color-hue-amber: #f0a862;
+  --color-hue-rose: #f2718f;
+  --color-hue-azure: #5aa9f0;
+  --color-hue-lime: #a3d95b;
 }
 
 @keyframes drift {
@@ -165,4 +186,34 @@
 
 @utility text-glow {
   text-shadow: 0 0 24px color-mix(in oklab, var(--color-signal) 45%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+   Per-card accent
+
+   A card sets `--accent` inline and these pick it up, so one variable
+   re-tints the heading, the border, the hover state and the cursor sheen
+   together. Falls back to the primary accent when nothing sets it.
+--------------------------------------------------------------------------- */
+@utility accent-card {
+  --accent: var(--color-signal);
+  border-color: color-mix(in oklab, var(--accent) 16%, var(--color-hairline));
+}
+
+@utility accent-card-hover {
+  border-color: color-mix(in oklab, var(--accent) 42%, transparent);
+}
+
+@utility text-accent {
+  color: var(--accent, var(--color-signal));
+}
+
+/* The cursor-following sheen. --mx/--my are written by the Tilt handler; the
+   hue comes from the card's own --accent. */
+@utility accent-sheen {
+  background-image: radial-gradient(
+    440px circle at var(--mx, 50%) var(--my, 0%),
+    color-mix(in oklab, var(--accent, var(--color-signal)) 13%, transparent),
+    transparent 62%
+  );
 }

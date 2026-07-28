@@ -109,21 +109,6 @@ export function Hero() {
         </motion.div>
       </div>
 
-      {/* Scroll cue */}
-      {!reduced && (
-        <motion.a
-          href="#about"
-          aria-label="Scroll to about"
-          animate={{ y: [0, 7, 0] }}
-          transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute bottom-8 left-1/2 hidden -translate-x-1/2 text-ink-faint transition-colors hover:text-signal sm:block"
-        >
-          <svg width="22" height="34" viewBox="0 0 22 34" fill="none" aria-hidden>
-            <rect x="1" y="1" width="20" height="32" rx="10" stroke="currentColor" strokeWidth="1.3" />
-            <circle cx="11" cy="10" r="2.4" fill="currentColor" />
-          </svg>
-        </motion.a>
-      )}
     </section>
   )
 }

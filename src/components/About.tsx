@@ -13,6 +13,7 @@ export function About() {
   return (
     <Section
       id="about"
+      accent="violet"
       index="01"
       title="About"
       lead={profile.tagline}

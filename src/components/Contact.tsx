@@ -13,7 +13,8 @@ export function Contact() {
   return (
     <Section
       id="contact"
-      index="05"
+      accent="azure"
+      index="06"
       title="Get in touch"
       lead="Working on something at the hardware/software seam, or just want to compare notes? Mail lands fastest."
     >

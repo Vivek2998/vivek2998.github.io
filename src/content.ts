@@ -107,6 +107,9 @@ export const education: TimelineEntry[] = [
   },
 ]
 
+/** One of the six hues in the accent family — see `--color-hue-*` in index.css. */
+export type Accent = 'teal' | 'violet' | 'amber' | 'rose' | 'azure' | 'lime'
+
 export type Project = {
   name: string
   blurb: string
@@ -118,11 +121,14 @@ export type Project = {
   featured?: boolean
   private?: boolean
   year: string
+  /* Tints the card's heading, border and cursor sheen. */
+  accent: Accent
 }
 
 export const projects: Project[] = [
   {
     name: 'Aegis',
+    accent: 'amber',
     year: '2026',
     featured: true,
     private: true,
@@ -135,6 +141,7 @@ export const projects: Project[] = [
   },
   {
     name: 'physix',
+    accent: 'violet',
     year: '2026',
     featured: true,
     blurb: 'See physics, don’t just solve it.',
@@ -147,6 +154,7 @@ export const projects: Project[] = [
   },
   {
     name: 'Mantra Config',
+    accent: 'teal',
     year: '2026',
     featured: true,
     private: true,
@@ -160,6 +168,7 @@ export const projects: Project[] = [
   },
   {
     name: 'HRMS Platform',
+    accent: 'rose',
     year: '2026',
     blurb: 'Human-resource management across web and mobile from one codebase.',
     detail: `A TypeScript web app with a Flutter client sharing the same backend,
@@ -170,6 +179,7 @@ export const projects: Project[] = [
   },
   {
     name: 'RISC-V RV32I Core',
+    accent: 'lime',
     year: '2021',
     blurb: 'A 32-bit RISC-V integer core, designed block by block in Verilog.',
     detail: `Register file, ALU, control unit and datapath written as RTL, then
@@ -180,6 +190,7 @@ export const projects: Project[] = [
   },
   {
     name: 'personal_portfolio',
+    accent: 'azure',
     year: '2023',
     blurb: 'The first version of this site, hand-written without a framework.',
     detail: `Plain HTML, CSS and JavaScript — no build step, no generator. Kept
@@ -191,31 +202,79 @@ export const projects: Project[] = [
   },
 ]
 
-export type SkillGroup = { label: string; items: string[] }
+/**
+ * The 2023-vs-2026 comparison.
+ *
+ * The framing is deliberate: the interesting change isn't the tooling, it's
+ * knowing what to build and what to throw away. Naming the specific things the
+ * old site got wrong is what makes that claim land — anyone can say they've
+ * improved.
+ */
+export const rebuild = {
+  lead: `The 2023 site is still online. Dragging between the two is the most
+    honest CV I have.`,
+  before: {
+    year: '2023',
+    caption: 'Hand-written, no framework',
+    image: '/compare/2023.webp',
+    alt: 'The 2023 portfolio: a light page with a centred heading and large empty space below.',
+    body: `I wrote every line of it myself — plain HTML, CSS and JavaScript, no
+      generator, no build step. It was genuinely the ceiling of what I could
+      build at the time, and I was proud of it.`,
+  },
+  after: {
+    year: '2026',
+    caption: 'Rebuilt, with AI in the loop',
+    image: '/compare/2026.webp',
+    alt: 'The 2026 portfolio: a dark page with a rotating point-sphere and a monospace heading.',
+    body: `I move a lot faster now, and I don't pretend I did this one alone. But
+      speed was never the thing that was missing.`,
+  },
+  note: {
+    title: 'What actually changed',
+    body: `For three years that old site shipped a project carousel of four blank
+      slides that all linked to tutorialspoint.com, a theme toggle that threw an
+      error on every single click, and a "Download CV" button that served a
+      stranger's train ticket. It had been frozen on a build from November 2023
+      without me noticing.`,
+    punchline: `I didn't catch any of it. Noticing is the part that's mine — the
+      tools only made the fixing quick.`,
+  },
+} as const
+
+export type SkillGroup = { label: string; items: string[]; accent: Accent }
 
 export const skills: SkillGroup[] = [
   {
     label: 'Systems & Embedded',
+    accent: 'amber',
     items: ['Embedded Linux', 'Yocto / BitBake', 'Linux', 'Shell', 'Verilog HDL', 'VLSI'],
   },
   {
     label: 'Languages',
+    accent: 'violet',
     items: ['Python', 'TypeScript', 'JavaScript', 'Java', 'C / C++', 'Dart', 'SQL'],
   },
   {
     label: 'Web',
+    accent: 'teal',
     items: ['React', 'Astro', 'Node.js', 'Tailwind CSS', 'HTML', 'CSS'],
   },
   {
     label: 'Tooling & Practice',
+    accent: 'azure',
     items: ['Test automation', 'Git', 'Vivado', 'PostgreSQL', 'MySQL', 'Power BI'],
   },
 ]
+
+/** Maps an accent name to its CSS variable, for inline `--accent` styling. */
+export const accentVar = (accent: Accent) => `var(--color-hue-${accent})`
 
 export const sections = [
   { id: 'home', label: 'Home' },
   { id: 'about', label: 'About' },
   { id: 'work', label: 'Work' },
+  { id: 'rebuild', label: 'Rebuild' },
   { id: 'journey', label: 'Journey' },
   { id: 'skills', label: 'Skills' },
   { id: 'contact', label: 'Contact' },

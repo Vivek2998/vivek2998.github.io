@@ -82,7 +82,8 @@ export function Journey() {
   return (
     <Section
       id="journey"
-      index="03"
+      accent="rose"
+      index="04"
       title="Journey"
       lead="Electronics to embedded to software — not a straight line, and better for it."
     >
