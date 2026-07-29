@@ -45,7 +45,7 @@ function Tilt({ children, className = '' }: { children: ReactNode; className?: s
 
 function Badge({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded-full border border-hairline px-2.5 py-1 font-mono text-[0.68rem] text-ink-faint transition-colors group-hover:border-[color-mix(in_oklab,var(--accent)_28%,transparent)]">
+    <span className="rounded-full border border-hairline bg-surface/70 px-2.5 py-1 font-mono text-[0.68rem] text-ink-faint transition-colors group-hover:border-[color-mix(in_oklab,var(--accent)_35%,transparent)]">
       {children}
     </span>
   )
@@ -110,7 +110,7 @@ function FeaturedCard({ project, step }: { project: Project; step: number }) {
             </span>
           </div>
 
-          <p className="text-accent mt-3 text-[0.95rem] leading-relaxed opacity-90">
+          <p className="text-accent mt-3 text-[0.95rem] leading-relaxed">
             {project.blurb}
           </p>
 
@@ -149,7 +149,7 @@ function CompactRow({ project, step }: { project: Project; step: number }) {
           <span className="font-mono text-xs text-ink-faint">{project.year}</span>
         </div>
 
-        <p className="text-accent mt-2 text-sm opacity-90 text-pretty">{project.blurb}</p>
+        <p className="text-accent mt-2 text-sm text-pretty">{project.blurb}</p>
 
         <div className="mt-4 flex flex-wrap gap-1.5">
           {project.stack.map((tech) => (

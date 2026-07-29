@@ -98,9 +98,20 @@ export function Hero() {
           </p>
 
           {/* Only worth saying where the globe is actually draggable. */}
-          <p className="mt-4 hidden font-mono text-xs text-ink-faint lg:block">
-            <span className="text-signal">↻</span> Drag the globe — the pins are
-            where I'd like this to lead
+          <p className="mt-4 hidden items-center gap-2 font-mono text-xs text-ink-faint lg:flex">
+            {/* Drawn, not typed: a rotate glyph sits outside the latin subset
+                the fonts ship, so it would pull in a whole extra face. */}
+            <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden className="shrink-0 text-signal">
+              <path
+                d="M11 6.5a4.5 4.5 0 1 1-1.4-3.26"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <path d="M11 1v3.2H7.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </svg>
+            Drag the globe — the pins are where I'd like this to lead
           </p>
         </motion.div>
       </div>

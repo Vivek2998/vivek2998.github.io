@@ -28,28 +28,30 @@ function latLonToVec(lat: number, lon: number): Vec {
   }
 }
 
-/** Latitude circles and meridians — what makes it read as a globe rather than
-    an abstract point cloud. */
-function buildGraticule() {
-  const lines: Vec[][] = []
-  const STEP = 6
-
-  for (let lat = -60; lat <= 60; lat += 30) {
-    const ring: Vec[] = []
-    for (let lon = -180; lon <= 180; lon += STEP) ring.push(latLonToVec(lat, lon))
-    lines.push(ring)
+/**
+ * Wires each lattice point to its near neighbours.
+ *
+ * This is what gives the sphere its web of lines running in every direction,
+ * rather than the strictly vertical meridians a lat/long graticule produces.
+ * The sphere is rigid, so the pairs are found once at startup and only
+ * re-projected per frame — a few hundred operations, not a search.
+ */
+function buildLinks(points: Vec[], maxChord: number): Array<[number, number]> {
+  const links: Array<[number, number]> = []
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const dx = points[i].x - points[j].x
+      const dy = points[i].y - points[j].y
+      const dz = points[i].z - points[j].z
+      if (Math.hypot(dx, dy, dz) < maxChord) links.push([i, j])
+    }
   }
-
-  for (let lon = -180; lon < 180; lon += 30) {
-    const meridian: Vec[] = []
-    for (let lat = -90; lat <= 90; lat += STEP) meridian.push(latLonToVec(lat, lon))
-    lines.push(meridian)
-  }
-
-  return lines
+  return links
 }
 
 const POINT_COUNT = 150
+/** Chord length below which two lattice points get wired together. */
+const LINK_DISTANCE = 0.4
 const AUTO_SPIN = 0.0014
 /** How long after letting go before the globe starts turning on its own again. */
 const IDLE_BEFORE_RESUME = 2200
@@ -64,7 +66,7 @@ export function HeroScene({ className }: { className?: string }) {
     if (!ctx) return
 
     const lattice = sphereLattice(POINT_COUNT)
-    const graticule = buildGraticule()
+    const links = buildLinks(lattice, LINK_DISTANCE)
     const pinVectors = globePins.map((p) => latLonToVec(p.lat, p.lon))
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -125,34 +127,29 @@ export function HeroScene({ className }: { className?: string }) {
       ctx.clearRect(0, 0, width, height)
       if (radius <= 0) return
 
-      // Graticule — front hemisphere brighter, back barely there.
+      // Project every lattice point once, then reuse for links and dots.
+      const projected = lattice.map(project)
+
+      // The web. Lines run in every direction, and the far hemisphere's
+      // clutter is dropped so the sphere still reads as solid.
       ctx.lineWidth = 1
-      for (const line of graticule) {
-        let started = false
+      for (const [a, bIdx] of links) {
+        const pa = projected[a]
+        const pb = projected[bIdx]
+        const depth = (pa.depth + pb.depth) / 2
+        if (depth < 0.3) continue
+        ctx.strokeStyle = `rgba(12, 122, 113, ${(depth - 0.3) * 0.5})`
         ctx.beginPath()
-        for (const v of line) {
-          const p = project(v)
-          if (p.z < -0.15) {
-            started = false
-            continue
-          }
-          if (started) ctx.lineTo(p.x, p.y)
-          else {
-            ctx.moveTo(p.x, p.y)
-            started = true
-          }
-        }
-        ctx.strokeStyle = 'rgba(14, 140, 130, 0.20)'
+        ctx.moveTo(pa.x, pa.y)
+        ctx.lineTo(pb.x, pb.y)
         ctx.stroke()
       }
 
-      // Lattice dots as surface texture.
-      for (const v of lattice) {
-        const p = project(v)
+      for (const p of projected) {
         if (p.z < 0) continue
         ctx.beginPath()
-        ctx.arc(p.x, p.y, 0.5 + p.depth * 1.3, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(28, 26, 23, ${0.05 + p.depth * 0.16})`
+        ctx.arc(p.x, p.y, 0.6 + p.depth * 1.5, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(26, 24, 21, ${0.08 + p.depth * 0.24})`
         ctx.fill()
       }
 
