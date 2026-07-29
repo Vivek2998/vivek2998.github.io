@@ -1,7 +1,34 @@
 import { useEffect, useRef } from 'react'
 import { globePins, type GlobePin } from '../content'
+import { isLand } from '../landMask'
 
 type Vec = { x: number; y: number; z: number }
+
+/**
+ * Land points, so the sphere is recognisably Earth and the pins sit on the
+ * countries they belong to.
+ *
+ * A dense Fibonacci lattice — even coverage, no clustering at the poles —
+ * generated in lat/lon and sampled against the land mask. Going through
+ * latLonToVec rather than placing the point directly is deliberate: the
+ * lattice's own angle is measured from a different axis than a longitude is,
+ * so deriving one from the other silently rotates every continent away from
+ * the pins.
+ */
+function landPoints(candidates: number): Vec[] {
+  const points: Vec[] = []
+  const golden = Math.PI * (3 - Math.sqrt(5))
+
+  for (let i = 0; i < candidates; i++) {
+    const y = 1 - (i / (candidates - 1)) * 2
+    const lat = (Math.asin(y) * 180) / Math.PI
+    // Wrap the running angle into -180..180.
+    const lon = ((((golden * i * 180) / Math.PI + 180) % 360) + 360) % 360 - 180
+
+    if (isLand(lat, lon)) points.push(latLonToVec(lat, lon))
+  }
+  return points
+}
 
 /** Even coverage of a sphere — the Fibonacci lattice, no clustering at the poles. */
 function sphereLattice(count: number): Vec[] {
@@ -49,9 +76,16 @@ function buildLinks(points: Vec[], maxChord: number): Array<[number, number]> {
   return links
 }
 
+/** The airy wireframe the sphere is built from. */
 const POINT_COUNT = 150
 /** Chord length below which two lattice points get wired together. */
 const LINK_DISTANCE = 0.4
+/* Candidates sampled for the land layer; about a third land on land.
+   Kept low on purpose. This layer exists so the pins sit on recognisable
+   ground, not to render the Earth — pushed dense enough for solid coastlines
+   it stops being a wireframe and turns into a dotted globe, which is not what
+   this is. The mesh stays the thing you see. */
+const LAND_SAMPLES = 9000
 const AUTO_SPIN = 0.0014
 /** How long after letting go before the globe starts turning on its own again. */
 const IDLE_BEFORE_RESUME = 2200
@@ -67,7 +101,25 @@ export function HeroScene({ className }: { className?: string }) {
 
     const lattice = sphereLattice(POINT_COUNT)
     const links = buildLinks(lattice, LINK_DISTANCE)
+    const land = landPoints(LAND_SAMPLES)
     const pinVectors = globePins.map((p) => latLonToVec(p.lat, p.lon))
+
+    /* Land is drawn in a handful of fixed shades rather than a unique colour
+       per point. Assigning ctx.fillStyle means building a string and parsing a
+       CSS colour, and doing that a few thousand times a frame was the single
+       biggest cost in here — bucketing turns it into one assignment and one
+       fill() per shade. The scratch arrays are allocated once. */
+    const SHADES = 10
+    const SHADE_ALPHA_MIN = 0.03
+    const SHADE_ALPHA_RANGE = 0.42
+    const SHADE_STYLES = Array.from({ length: SHADES }, (_, i) => {
+      const alpha = SHADE_ALPHA_MIN + ((i + 0.5) / SHADES) * SHADE_ALPHA_RANGE
+      return `rgba(11, 105, 99, ${alpha.toFixed(3)})`
+    })
+    const landX = new Float32Array(land.length)
+    const landY = new Float32Array(land.length)
+    const landSize = new Float32Array(land.length)
+    const landShade = new Uint8Array(land.length)
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -77,9 +129,13 @@ export function HeroScene({ className }: { className?: string }) {
     let frame = 0
     let running = false
 
-    // Start with India toward the viewer, so the "you are here" pin is visible.
-    let yaw = -1.35
-    let pitch = -0.35
+    /* Start with India toward the viewer, so the "you are here" pin is visible.
+       Yaw equals the target longitude in radians — a point at longitude L ends
+       up nearest the camera when the yaw matches it, which is why the sign
+       matters. Gurugram is 77.03E. Pitch tilts the north pole toward us by
+       about 24 degrees, which is the angle a globe on a stand sits at. */
+    let yaw = (globePins.find((p) => p.home)?.lon ?? 0) * (Math.PI / 180)
+    let pitch = 0.42
     let spinVelocity = 0
     let dragging = false
     let lastPointer = { x: 0, y: 0 }
@@ -99,11 +155,22 @@ export function HeroScene({ className }: { className?: string }) {
       radius = Math.min(width, height) * 0.36
     }
 
+    /* Rotation is the same for every point in a frame, so the four values are
+       computed once in draw() rather than per point — at a few thousand points
+       that was twenty thousand trig calls a frame. */
+    let cosY = 1
+    let sinY = 0
+    let cosX = 1
+    let sinX = 0
+
+    const syncRotation = () => {
+      cosY = Math.cos(yaw)
+      sinY = Math.sin(yaw)
+      cosX = Math.cos(pitch)
+      sinX = Math.sin(pitch)
+    }
+
     const rotate = (v: Vec) => {
-      const cosY = Math.cos(yaw)
-      const sinY = Math.sin(yaw)
-      const cosX = Math.cos(pitch)
-      const sinX = Math.sin(pitch)
       const x1 = v.x * cosY - v.z * sinY
       const z1 = v.x * sinY + v.z * cosY
       const y2 = v.y * cosX - z1 * sinX
@@ -117,7 +184,9 @@ export function HeroScene({ className }: { className?: string }) {
       const scale = (1 / (2.6 - r.z)) * 2.6
       return {
         x: width / 2 + r.x * radius * scale,
-        y: height / 2 + r.y * radius * scale,
+        // Negated: latitude runs north-positive but canvas y runs downward, so
+        // without this the globe renders upside down.
+        y: height / 2 - r.y * radius * scale,
         z: r.z,
         depth: (r.z + 1) / 2,
       }
@@ -126,66 +195,100 @@ export function HeroScene({ className }: { className?: string }) {
     const draw = () => {
       ctx.clearRect(0, 0, width, height)
       if (radius <= 0) return
+      syncRotation()
 
-      const cx = width / 2
-      const cy = height / 2
+      /* No fill of any kind.
+         An earlier pass shaded the disc to fake volume and it turned the globe
+         into a frosted marble. The sphere should stay something you look
+         through — that transparency is the whole character of it. */
 
-      /* No body fill.
-         Filling the disc turned the globe into a frosted ball; the dark theme
-         read as a sphere precisely because you could see the far side of the
-         mesh through the near side. All the volume here comes from contrast —
-         the back of the mesh is drawn, just very faintly. Only the softest
-         shadow at the very edge, to seat it on the paper. */
-      const edge = ctx.createRadialGradient(cx, cy, radius * 0.86, cx, cy, radius * 1.1)
-      edge.addColorStop(0, 'rgba(10, 92, 96, 0)')
-      edge.addColorStop(1, 'rgba(10, 92, 96, 0.07)')
-      ctx.beginPath()
-      ctx.arc(cx, cy, radius * 1.1, 0, Math.PI * 2)
-      ctx.fillStyle = edge
-      ctx.fill()
-
-      // Project every lattice point once, then reuse for links and dots.
+      // Project the wireframe once, then reuse for links and vertices.
       const projected = lattice.map(project)
 
-      /* The web.
-         Depth drives both colour and weight across the full range, the way it
-         did on dark: the far side all but disappears and the near side comes
-         forward. A flat alpha here is what made it look like a drawing of a
-         sphere rather than a sphere. */
+      /* The mesh is the subject. Everything else on the sphere is set below it
+         so this stays what you actually see. */
+      ctx.lineWidth = 1
       for (const [a, bIdx] of links) {
         const pa = projected[a]
         const pb = projected[bIdx]
-        // The far half is kept, not culled — seeing the back of the mesh
-        // through the front is what makes it read as a sphere rather than a
-        // disc. It just sits at a tenth of the weight.
         const depth = (pa.depth + pb.depth) / 2
-        const t = depth // 0 at the far pole, 1 nearest
-
-        // Stays on the teal ramp — shifting to violet with depth turned the
-        // whole sphere blue and lost the site's accent.
-        const r = Math.round(30 + (8 - 30) * t)
-        const g = Math.round(176 + (92 - 176) * t)
-        const bl = Math.round(164 + (88 - 164) * t)
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${bl}, ${0.04 + t * t * t * 0.62})`
-        ctx.lineWidth = 0.5 + t * 0.75
+        if (depth < 0.3) continue
+        ctx.strokeStyle = `rgba(12, 122, 113, ${(depth - 0.3) * 0.62})`
         ctx.beginPath()
         ctx.moveTo(pa.x, pa.y)
         ctx.lineTo(pb.x, pb.y)
         ctx.stroke()
       }
 
-      // Vertices deepen toward indigo at the very front — enough of a shift to
-      // separate near from far without leaving the palette. Back-side nodes
-      // stay in, barely, for the same see-through reason as the links.
       for (const p of projected) {
-        const t = p.depth
-        const r = Math.round(26 + (44 - 26) * t)
-        const g = Math.round(164 + (66 - 164) * t)
-        const bl = Math.round(152 + (148 - 152) * t)
+        if (p.z < 0) continue
         ctx.beginPath()
-        ctx.arc(p.x, p.y, 0.5 + t * t * 2.2, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${r}, ${g}, ${bl}, ${0.05 + t * t * 0.85})`
+        ctx.arc(p.x, p.y, 0.6 + p.depth * 1.6, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(26, 24, 21, ${0.08 + p.depth * 0.24})`
         ctx.fill()
+      }
+
+      /* Land. Carried stronger than the mesh so the continents are what you
+         actually read, and kept on the far side too — seeing the back of the
+         world through the front is what sells it as a globe rather than a disc.
+
+         A small globe doesn't have the pixels to resolve this many points, so
+         it thins them out instead of drawing thousands into the same spot. */
+      /* Thin the points out where the extra density buys nothing: below the lg
+         breakpoint the globe isn't draggable and sits at reduced opacity, so
+         it's decoration, and phones are exactly where the frame budget is
+         tightest. */
+      const decorative = window.innerWidth < 1024
+      const stride = decorative ? 3 : radius < 185 ? 2 : 1
+
+      const halfW = width / 2
+      const halfH = height / 2
+      let visible = 0
+
+      for (let i = 0; i < land.length; i += stride) {
+        // Projection inlined: project() allocates a result object, and a few
+        // thousand short-lived objects a frame is pure GC churn.
+        const v = land[i]
+        const x1 = v.x * cosY - v.z * sinY
+        const z1 = v.x * sinY + v.z * cosY
+        const y2 = v.y * cosX - z1 * sinX
+        const z2 = v.y * sinX + z1 * cosX
+
+        const scale = (1 / (2.6 - z2)) * 2.6 * radius
+        const t = (z2 + 1) / 2
+        const near = z2 > 0
+        const alpha = near ? 0.12 + t * 0.32 : 0.03 + t * 0.05
+
+        landX[visible] = halfW + x1 * scale
+        landY[visible] = halfH - y2 * scale
+        landSize[visible] = near ? 0.9 + t * 0.9 : 0.8
+        landShade[visible] = Math.min(
+          SHADES - 1,
+          Math.max(
+            0,
+            Math.floor(((alpha - SHADE_ALPHA_MIN) / SHADE_ALPHA_RANGE) * SHADES),
+          ),
+        )
+        visible++
+      }
+
+      // Rectangles rather than arcs: at a couple of pixels the shape is
+      // indistinguishable, and rect() batches into one path per shade.
+      for (let shade = 0; shade < SHADES; shade++) {
+        let started = false
+        for (let i = 0; i < visible; i++) {
+          if (landShade[i] !== shade) continue
+          if (!started) {
+            ctx.beginPath()
+            started = true
+          }
+          const s = landSize[i]
+          ctx.rect(landX[i] - s / 2, landY[i] - s / 2, s, s)
+        }
+        if (started) {
+          ctx.fillStyle = SHADE_STYLES[shade]
+          ctx.fill()
+        }
       }
 
       // Pins, back to front so nearer ones overlap the rest.

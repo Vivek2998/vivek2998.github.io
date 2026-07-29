@@ -56,11 +56,15 @@ export function Hero() {
           can't swallow taps meant for the copy or the buttons. */}
       <HeroScene className="pointer-events-none absolute top-1/2 right-[-18%] h-[min(88vh,760px)] w-[min(88vh,760px)] -translate-y-1/2 opacity-60 sm:right-[-8%] sm:opacity-75 lg:right-[1%] lg:opacity-100 lg:pointer-events-auto" />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-5 sm:px-8">
+      {/* pointer-events-none on the wrapper, restored on the copy itself.
+          The wrapper is centred and full width, so its empty right-hand half
+          was sitting on top of the globe and swallowing drags over most of it —
+          only the sliver past the wrapper's edge was grabbable. */}
+      <div className="pointer-events-none relative z-10 mx-auto w-full max-w-6xl px-5 sm:px-8">
         {/* Deliberately not animated in. This block is the largest thing on
             screen, so fading it would push back the moment the page counts as
             painted for no real gain — the globe already supplies the movement. */}
-        <div className="max-w-2xl">
+        <div className="pointer-events-auto max-w-2xl">
           <p className="mb-6 flex items-center gap-2.5 font-mono text-xs tracking-[0.2em] text-signal uppercase">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-70" />

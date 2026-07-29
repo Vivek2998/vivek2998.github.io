@@ -43,6 +43,7 @@ publishes `dist/` to GitHub Pages. No manual step.
 | `src/index.css` | Design tokens, base styles, the `panel` / `glass` / `hairline-grid` utilities |
 | `src/components/Aurora.tsx` | Drifting background gradients + grid — the only source of the "glass" look |
 | `src/components/HeroScene.tsx` | The draggable globe — hand-rolled 3D projection on a 2D canvas |
+| `src/landMask.ts` | Generated land/sea bitmask — rebuild with `scripts/build-land-mask.py` |
 | `src/components/Reveal.tsx` | Scroll-into-view animation wrapper |
 | `src/components/Section.tsx` | Shared numbered section chrome |
 | `src/components/ContactForm.tsx` | The form that swaps in for the social links |
@@ -52,7 +53,10 @@ publishes `dist/` to GitHub Pages. No manual step.
 The hero globe projects a graticule, a point lattice and a handful of location pins
 by hand on a 2D canvas rather than pulling in a 3D library — Three.js would have cost
 roughly 600 kB to spin a sphere. Drag to rotate; it carries inertia, and picks the
-auto-spin back up once you've left it alone. It pauses when scrolled out of view or
+auto-spin back up once you've left it alone. Pins sit at real coordinates, and a
+faint land layer — sampled from a 1-degree bitmask baked in at build time — puts
+them on recognisable ground. That layer is kept deliberately sparse: dense enough
+for solid coastlines and it stops being a wireframe. It pauses when scrolled out of view or
 when the tab is hidden, and renders a single static frame under
 `prefers-reduced-motion`. The pins are listed in text for screen readers, since the
 canvas itself says nothing.
