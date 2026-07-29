@@ -521,8 +521,7 @@ export function HeroScene({ className }: { className?: string }) {
           .filter((p) => !p.home)
           .map((p) => `${p.label} in ${p.place}`)
           .join(', ')}
-        . It also marks {globePins.find((p) => p.home)?.place.toLowerCase()},
-        Gurugram, India.
+        . It also marks Gurugram, India, where I am now.
       </p>
     </>
   )

@@ -46,12 +46,13 @@ export type GlobePin = {
 }
 
 export const globePins: GlobePin[] = [
-  { lat: 32.78, lon: -96.8, label: 'Texas Instruments', place: 'Dallas, USA' },
   { lat: 37.37, lon: -121.98, label: 'NVIDIA · AMD', place: 'Santa Clara, USA' },
-  { lat: 24.78, lon: 120.99, label: 'TSMC', place: 'Hsinchu, Taiwan' },
-  { lat: 35.68, lon: 139.69, label: 'Honda', place: 'Tokyo, Japan' },
-  { lat: 37.28, lon: 127.05, label: 'Samsung', place: 'Suwon, South Korea' },
+  { lat: 32.78, lon: -96.8, label: 'Texas Instruments', place: 'Dallas, USA' },
+  { lat: 51.42, lon: 5.4, label: 'ASML', place: 'Veldhoven, Netherlands' },
   { lat: 28.46, lon: 77.03, label: 'Gurugram', place: 'Where I am now', home: true },
+  { lat: 24.78, lon: 120.99, label: 'TSMC', place: 'Hsinchu, Taiwan' },
+  { lat: 37.28, lon: 127.05, label: 'Samsung', place: 'Suwon, South Korea' },
+  { lat: 35.68, lon: 139.69, label: 'Honda', place: 'Tokyo, Japan' },
 ]
 
 /**
