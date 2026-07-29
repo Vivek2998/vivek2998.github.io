@@ -127,29 +127,64 @@ export function HeroScene({ className }: { className?: string }) {
       ctx.clearRect(0, 0, width, height)
       if (radius <= 0) return
 
+      const cx = width / 2
+      const cy = height / 2
+
+      /* No body fill.
+         Filling the disc turned the globe into a frosted ball; the dark theme
+         read as a sphere precisely because you could see the far side of the
+         mesh through the near side. All the volume here comes from contrast —
+         the back of the mesh is drawn, just very faintly. Only the softest
+         shadow at the very edge, to seat it on the paper. */
+      const edge = ctx.createRadialGradient(cx, cy, radius * 0.86, cx, cy, radius * 1.1)
+      edge.addColorStop(0, 'rgba(10, 92, 96, 0)')
+      edge.addColorStop(1, 'rgba(10, 92, 96, 0.07)')
+      ctx.beginPath()
+      ctx.arc(cx, cy, radius * 1.1, 0, Math.PI * 2)
+      ctx.fillStyle = edge
+      ctx.fill()
+
       // Project every lattice point once, then reuse for links and dots.
       const projected = lattice.map(project)
 
-      // The web. Lines run in every direction, and the far hemisphere's
-      // clutter is dropped so the sphere still reads as solid.
-      ctx.lineWidth = 1
+      /* The web.
+         Depth drives both colour and weight across the full range, the way it
+         did on dark: the far side all but disappears and the near side comes
+         forward. A flat alpha here is what made it look like a drawing of a
+         sphere rather than a sphere. */
       for (const [a, bIdx] of links) {
         const pa = projected[a]
         const pb = projected[bIdx]
+        // The far half is kept, not culled — seeing the back of the mesh
+        // through the front is what makes it read as a sphere rather than a
+        // disc. It just sits at a tenth of the weight.
         const depth = (pa.depth + pb.depth) / 2
-        if (depth < 0.3) continue
-        ctx.strokeStyle = `rgba(12, 122, 113, ${(depth - 0.3) * 0.5})`
+        const t = depth // 0 at the far pole, 1 nearest
+
+        // Stays on the teal ramp — shifting to violet with depth turned the
+        // whole sphere blue and lost the site's accent.
+        const r = Math.round(30 + (8 - 30) * t)
+        const g = Math.round(176 + (92 - 176) * t)
+        const bl = Math.round(164 + (88 - 164) * t)
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${bl}, ${0.04 + t * t * t * 0.62})`
+        ctx.lineWidth = 0.5 + t * 0.75
         ctx.beginPath()
         ctx.moveTo(pa.x, pa.y)
         ctx.lineTo(pb.x, pb.y)
         ctx.stroke()
       }
 
+      // Vertices deepen toward indigo at the very front — enough of a shift to
+      // separate near from far without leaving the palette. Back-side nodes
+      // stay in, barely, for the same see-through reason as the links.
       for (const p of projected) {
-        if (p.z < 0) continue
+        const t = p.depth
+        const r = Math.round(26 + (44 - 26) * t)
+        const g = Math.round(164 + (66 - 164) * t)
+        const bl = Math.round(152 + (148 - 152) * t)
         ctx.beginPath()
-        ctx.arc(p.x, p.y, 0.6 + p.depth * 1.5, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(26, 24, 21, ${0.08 + p.depth * 0.24})`
+        ctx.arc(p.x, p.y, 0.5 + t * t * 2.2, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r}, ${g}, ${bl}, ${0.05 + t * t * 0.85})`
         ctx.fill()
       }
 

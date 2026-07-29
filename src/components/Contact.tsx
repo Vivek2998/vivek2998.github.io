@@ -3,6 +3,7 @@ import { Section } from './Section'
 import { Reveal } from './Reveal'
 import { ActionButton } from './ActionButton'
 import { ContactForm } from './ContactForm'
+import { useReducedMotion } from '../hooks/useReducedMotion'
 import { contactForm, links, profile } from '../content'
 
 const socials = [
@@ -63,20 +64,53 @@ function Sent({ secondsLeft }: { secondsLeft: number }) {
   )
 }
 
+const SWAP_MS = 380
+
 export function Contact() {
   const [panel, setPanel] = useState<Panel>('socials')
+  /* The panel being replaced. It stays mounted for the length of the swap so
+     it can slide out — without it the outgoing one would simply vanish, which
+     is what made the change feel like a cut. */
+  const [outgoing, setOutgoing] = useState<Panel | null>(null)
   const [secondsLeft, setSecondsLeft] = useState(0)
+  const panelRef = useRef<Panel>('socials')
   const timers = useRef<number[]>([])
+  const swapTimer = useRef<number>(0)
+  const reduced = useReducedMotion()
 
   const clearTimers = () => {
     timers.current.forEach(clearInterval)
     timers.current = []
   }
 
-  useEffect(() => clearTimers, [])
+  useEffect(
+    () => () => {
+      clearTimers()
+      clearTimeout(swapTimer.current)
+    },
+    [],
+  )
+
+  /* The current panel is mirrored in a ref so this can read it without a stale
+     closure — the countdown interval calls goTo long after its own render.
+     Scheduling the outgoing panel inside a setPanel updater would be worse:
+     updaters have to be pure, and StrictMode runs them twice. */
+  const goTo = (next: Panel) => {
+    const current = panelRef.current
+    if (current === next) return
+    panelRef.current = next
+
+    if (!reduced) {
+      setOutgoing(current)
+      clearTimeout(swapTimer.current)
+      swapTimer.current = window.setTimeout(() => setOutgoing(null), SWAP_MS)
+    }
+
+    setPanel(next)
+  }
 
   const handleSent = () => {
-    setPanel('sent')
+    goTo('sent')
     const total = Math.round(contactForm.successHoldMs / 1000)
     setSecondsLeft(total)
 
@@ -87,7 +121,7 @@ export function Contact() {
       setSecondsLeft((s) => {
         if (s <= 1) {
           clearTimers()
-          setPanel('socials')
+          goTo('socials')
           return 0
         }
         return s - 1
@@ -98,7 +132,19 @@ export function Contact() {
 
   const showForm = () => {
     clearTimers()
-    setPanel('form')
+    goTo('form')
+  }
+
+  const renderPanel = (which: Panel) => {
+    if (which === 'form') {
+      return (
+        <div className="glass h-full p-6 sm:p-7">
+          <ContactForm onSent={handleSent} />
+        </div>
+      )
+    }
+    if (which === 'sent') return <Sent secondsLeft={secondsLeft} />
+    return <SocialList />
   }
 
   return (
@@ -159,17 +205,27 @@ export function Contact() {
             all in the same slot so the section never jumps height. */}
         <Reveal step={1}>
           <div id="contact-panel" className="h-full">
-            {/* Keyed so React swaps the subtree outright, which restarts the
-                CSS entry animation. No exit animation — the outgoing panel is
-                replaced instantly, and at 0.28s in nobody reads it as a cut. */}
-            <div key={panel} className="h-full [animation:panel-in_0.28s_cubic-bezier(0.22,1,0.36,1)_both]">
-              {panel === 'socials' && <SocialList />}
-              {panel === 'form' && (
-                <div className="glass h-full p-6 sm:p-7">
-                  <ContactForm onSent={handleSent} />
+            {/* The outgoing panel is taken out of flow so the incoming one
+                sets the height and the two overlap mid-slide. The wrapper is
+                padded and pulled back by the same amount so clipping the
+                slide doesn't also clip the cards' shadows. */}
+            <div className="relative -m-3 h-[calc(100%+1.5rem)] overflow-hidden p-3">
+              {outgoing && (
+                <div
+                  key={`${outgoing}-out`}
+                  aria-hidden
+                  className="absolute inset-3 [animation:panel-out_0.38s_cubic-bezier(0.4,0,0.2,1)_both]"
+                >
+                  {renderPanel(outgoing)}
                 </div>
               )}
-              {panel === 'sent' && <Sent secondsLeft={secondsLeft} />}
+
+              <div
+                key={panel}
+                className="h-full [animation:panel-in_0.38s_cubic-bezier(0.22,1,0.36,1)_both]"
+              >
+                {renderPanel(panel)}
+              </div>
             </div>
           </div>
         </Reveal>
