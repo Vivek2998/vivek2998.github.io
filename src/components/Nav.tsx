@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { profile, sections } from '../content'
 
 export function Nav() {
   const [active, setActive] = useState<string>(sections[0].id)
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const listRef = useRef<HTMLUListElement>(null)
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
 
   // Highlight whichever section currently owns the middle of the viewport.
   useEffect(() => {
@@ -25,6 +26,30 @@ export function Nav() {
     }
     return () => observer.disconnect()
   }, [])
+
+  /* The sliding pill is a single positioned element measured against the active
+     link, rather than an animation library laying out a shared element. */
+  const measurePill = useCallback(() => {
+    const list = listRef.current
+    if (!list) return
+    const target = list.querySelector<HTMLElement>(`[data-nav="${active}"]`)
+    if (!target) return
+    setPill({ left: target.offsetLeft, width: target.offsetWidth })
+  }, [active])
+
+  useEffect(() => {
+    measurePill()
+  }, [measurePill])
+
+  useEffect(() => {
+    window.addEventListener('resize', measurePill)
+    return () => window.removeEventListener('resize', measurePill)
+  }, [measurePill])
+
+  // Re-measure once the webfont swaps in, since it changes label widths.
+  useEffect(() => {
+    document.fonts?.ready.then(measurePill).catch(() => {})
+  }, [measurePill])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -51,7 +76,7 @@ export function Nav() {
     <>
       <a
         href="#about"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-100 focus:rounded-lg focus:bg-surface-raised/60 focus:px-4 focus:py-2 focus:text-sm"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-100 focus:rounded-lg focus:bg-surface-raised focus:px-4 focus:py-2 focus:text-sm"
       >
         Skip to content
       </a>
@@ -59,7 +84,7 @@ export function Nav() {
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
           scrolled
-            ? 'border-b border-hairline bg-paper/72 backdrop-blur-xl'
+            ? 'border-b border-hairline bg-paper/75 backdrop-blur-xl'
             : 'border-b border-transparent'
         }`}
       >
@@ -75,25 +100,25 @@ export function Nav() {
             </span>
           </a>
 
-          <ul className="hidden items-center gap-1 md:flex">
+          <ul ref={listRef} className="relative hidden items-center gap-1 md:flex">
+            {pill && (
+              <span
+                aria-hidden
+                className="absolute top-0 bottom-0 -z-10 rounded-full border border-signal/30 bg-signal/8 transition-[transform,width] duration-300 ease-out"
+                style={{ transform: `translateX(${pill.left}px)`, width: pill.width }}
+              />
+            )}
+
             {sections.map(({ id, label }) => (
               <li key={id}>
                 <a
                   href={`#${id}`}
+                  data-nav={id}
                   aria-current={active === id ? 'true' : undefined}
-                  className={`relative block rounded-full px-3.5 py-1.5 text-sm transition-colors ${
-                    active === id
-                      ? 'text-ink'
-                      : 'text-ink-faint hover:text-ink-muted'
+                  className={`block rounded-full px-3.5 py-1.5 text-sm transition-colors ${
+                    active === id ? 'text-ink' : 'text-ink-faint hover:text-ink-muted'
                   }`}
                 >
-                  {active === id && (
-                    <motion.span
-                      layoutId="nav-pill"
-                      className="absolute inset-0 -z-10 rounded-full border border-signal/25 bg-signal/8"
-                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                    />
-                  )}
                   {label}
                 </a>
               </li>
@@ -108,7 +133,6 @@ export function Nav() {
             aria-label={open ? 'Close menu' : 'Open menu'}
             className="relative z-60 flex h-10 w-10 items-center justify-center rounded-lg border border-hairline text-ink-muted transition-colors hover:text-ink md:hidden"
           >
-            <span className="sr-only">{open ? 'Close menu' : 'Open menu'}</span>
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
               <path
                 d={open ? 'M4 4 L14 14 M14 4 L4 14' : 'M2 5h14M2 12h14'}
@@ -122,39 +146,31 @@ export function Nav() {
         </nav>
       </header>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            id="mobile-nav"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-55 bg-paper/95 backdrop-blur-2xl md:hidden"
-          >
-            <ul className="flex h-full flex-col items-center justify-center gap-2">
-              {sections.map(({ id, label }, i) => (
-                <motion.li
-                  key={id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 + i * 0.05 }}
-                >
-                  <a
-                    href={`#${id}`}
-                    onClick={() => setOpen(false)}
-                    className={`block px-6 py-3 text-2xl transition-colors ${
-                      active === id ? 'text-signal' : 'text-ink-muted'
-                    }`}
-                  >
-                    {label}
-                  </a>
-                </motion.li>
-              ))}
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Kept mounted and toggled with opacity/visibility so the transition
+          doesn't need an animation library to handle the exit. */}
+      <div
+        id="mobile-nav"
+        className={`fixed inset-0 z-55 bg-paper/96 backdrop-blur-2xl transition-[opacity,visibility] duration-200 md:hidden ${
+          open ? 'visible opacity-100' : 'invisible opacity-0'
+        }`}
+      >
+        <ul className="flex h-full flex-col items-center justify-center gap-2">
+          {sections.map(({ id, label }) => (
+            <li key={id}>
+              <a
+                href={`#${id}`}
+                onClick={() => setOpen(false)}
+                tabIndex={open ? undefined : -1}
+                className={`block px-6 py-3 text-2xl transition-colors ${
+                  active === id ? 'text-signal' : 'text-ink-muted'
+                }`}
+              >
+                {label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </>
   )
 }

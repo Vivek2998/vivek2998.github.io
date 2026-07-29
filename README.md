@@ -2,7 +2,7 @@
 
 My portfolio. **Live at [vivek2998.github.io](https://vivek2998.github.io/)**.
 
-Built with React 19, Vite, Tailwind CSS v4 and Framer Motion. Light, on a warm
+Built with React 19, Vite and Tailwind CSS v4. Light, on a warm
 bone ground rather than plain white, with the heavier visual effects —
 glassmorphism, aurora gradients, 3D — used as accents rather than as the whole
 design.
@@ -24,7 +24,7 @@ through JSX to fix a date or add a project.
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm run build    # type-check + production build into dist/
+npm run build    # type-check, build, then prerender into dist/
 npm run preview  # serve the built output
 ```
 
@@ -56,6 +56,18 @@ auto-spin back up once you've left it alone. It pauses when scrolled out of view
 when the tab is hidden, and renders a single static frame under
 `prefers-reduced-motion`. The pins are listed in text for screen readers, since the
 canvas itself says nothing.
+
+### On speed
+
+The page is prerendered to static HTML at build time (`src/entry-server.tsx` +
+`scripts/prerender.mjs`) and the client hydrates it, so the text is on screen
+before the bundle has finished downloading. Fonts are self-hosted, latin subset
+only. There's no animation library — the scroll reveals, the nav pill and the
+panel swaps are CSS, which is why `Reveal` only ever hides things that are
+off-screen: hiding prerendered content on mount would give the work back.
+
+Measured on a throttled connection (4 Mbps, 150 ms RTT, 4x CPU slowdown),
+first contentful paint went from ~1.8 s to ~0.7 s.
 
 ### On the contact form
 

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Section } from './Section'
 import { Reveal } from './Reveal'
 import { ActionButton } from './ActionButton'
@@ -67,7 +66,6 @@ function Sent({ secondsLeft }: { secondsLeft: number }) {
 export function Contact() {
   const [panel, setPanel] = useState<Panel>('socials')
   const [secondsLeft, setSecondsLeft] = useState(0)
-  const reduced = useReducedMotion()
   const timers = useRef<number[]>([])
 
   const clearTimers = () => {
@@ -102,15 +100,6 @@ export function Contact() {
     clearTimers()
     setPanel('form')
   }
-
-  const fade = reduced
-    ? {}
-    : {
-        initial: { opacity: 0, y: 12 },
-        animate: { opacity: 1, y: 0 },
-        exit: { opacity: 0, y: -12 },
-        transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const },
-      }
 
   return (
     <Section
@@ -170,17 +159,18 @@ export function Contact() {
             all in the same slot so the section never jumps height. */}
         <Reveal step={1}>
           <div id="contact-panel" className="h-full">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div key={panel} {...fade} className="h-full">
-                {panel === 'socials' && <SocialList />}
-                {panel === 'form' && (
-                  <div className="glass h-full p-6 sm:p-7">
-                    <ContactForm onSent={handleSent} />
-                  </div>
-                )}
-                {panel === 'sent' && <Sent secondsLeft={secondsLeft} />}
-              </motion.div>
-            </AnimatePresence>
+            {/* Keyed so React swaps the subtree outright, which restarts the
+                CSS entry animation. No exit animation — the outgoing panel is
+                replaced instantly, and at 0.28s in nobody reads it as a cut. */}
+            <div key={panel} className="h-full [animation:panel-in_0.28s_cubic-bezier(0.22,1,0.36,1)_both]">
+              {panel === 'socials' && <SocialList />}
+              {panel === 'form' && (
+                <div className="glass h-full p-6 sm:p-7">
+                  <ContactForm onSent={handleSent} />
+                </div>
+              )}
+              {panel === 'sent' && <Sent secondsLeft={secondsLeft} />}
+            </div>
           </div>
         </Reveal>
       </div>

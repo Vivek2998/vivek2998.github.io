@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '../hooks/useReducedMotion'
 import { Section } from './Section'
 import { Reveal } from './Reveal'
 import { accentVar, projects, type Project } from '../content'

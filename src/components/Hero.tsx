@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
 import { HeroScene } from './HeroScene'
 import { ActionButton } from './ActionButton'
+import { useReducedMotion } from '../hooks/useReducedMotion'
 import { links, profile } from '../content'
 
-/** Types a word out, holds, deletes, moves on. */
+/**
+ * Types a word out, holds, deletes, moves on.
+ *
+ * Seeded with the first word rather than an empty string so the prerendered
+ * HTML carries real text — an empty prompt would be a blank line to a crawler,
+ * and a visible pop-in to everyone else.
+ */
 function useTypedWord(words: readonly string[], enabled: boolean) {
   const [index, setIndex] = useState(0)
-  const [text, setText] = useState('')
+  const [text, setText] = useState(words[0])
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
@@ -51,12 +57,10 @@ export function Hero() {
       <HeroScene className="pointer-events-none absolute top-1/2 right-[-18%] h-[min(88vh,760px)] w-[min(88vh,760px)] -translate-y-1/2 opacity-60 sm:right-[-8%] sm:opacity-75 lg:right-[1%] lg:opacity-100 lg:pointer-events-auto" />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-5 sm:px-8">
-        <motion.div
-          initial={reduced ? false : { opacity: 0, y: 26 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-2xl"
-        >
+        {/* Deliberately not animated in. This block is the largest thing on
+            screen, so fading it would push back the moment the page counts as
+            painted for no real gain — the globe already supplies the movement. */}
+        <div className="max-w-2xl">
           <p className="mb-6 flex items-center gap-2.5 font-mono text-xs tracking-[0.2em] text-signal uppercase">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-70" />
@@ -73,11 +77,9 @@ export function Hero() {
             <span className="text-ink-faint">{'>'} </span>
             <span className="text-signal">{typed}</span>
             {!reduced && (
-              <motion.span
+              <span
                 aria-hidden
-                animate={{ opacity: [1, 1, 0, 0] }}
-                transition={{ duration: 1.05, repeat: Infinity, times: [0, 0.5, 0.5, 1] }}
-                className="ml-0.5 inline-block h-[1.05em] w-[0.5ch] translate-y-[0.14em] bg-signal"
+                className="ml-0.5 inline-block h-[1.05em] w-[0.5ch] translate-y-[0.14em] bg-signal [animation:cursor-blink_1.05s_step-end_infinite]"
               />
             )}
           </p>
@@ -113,7 +115,7 @@ export function Hero() {
             </svg>
             Drag the globe — the pins are where I'd like this to lead
           </p>
-        </motion.div>
+        </div>
       </div>
 
     </section>

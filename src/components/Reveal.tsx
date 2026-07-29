@@ -1,5 +1,5 @@
-import { motion, useReducedMotion } from 'framer-motion'
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
+import { useReducedMotion } from '../hooks/useReducedMotion'
 
 type Props = {
   children: ReactNode
@@ -10,31 +10,47 @@ type Props = {
 }
 
 /**
- * Fades content up as it scrolls into view, once. When the visitor prefers
- * reduced motion the content is simply present from the start.
+ * Fades content up as it scrolls into view, once.
+ *
+ * Content is visible by default and only ever hidden by script, which matters
+ * for two reasons: the prerendered HTML is readable before any JavaScript runs,
+ * and anything already on screen at load is left completely alone. Hiding
+ * above-the-fold content on mount just to fade it back in would undo the
+ * prerender and make the page feel slower than it is.
  */
-export function Reveal({ children, step = 0, className, as = 'div' }: Props) {
+export function Reveal({ children, step = 0, className, as: Tag = 'div' }: Props) {
+  const ref = useRef<HTMLElement>(null)
   const reduced = useReducedMotion()
-  const Component = motion[as]
 
-  if (reduced) {
-    const Plain = as
-    return <Plain className={className}>{children}</Plain>
-  }
+  useEffect(() => {
+    const el = ref.current
+    if (!el || reduced) return
+
+    // Already in view — leave it as it is rather than flashing it out.
+    if (el.getBoundingClientRect().top < window.innerHeight) return
+
+    el.dataset.reveal = 'pending'
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        el.dataset.reveal = 'in'
+        observer.disconnect()
+      },
+      { rootMargin: '0px 0px -80px 0px' },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [reduced])
 
   return (
-    <Component
+    <Tag
+      ref={ref as React.Ref<never>}
       className={className}
-      initial={{ opacity: 0, y: 22 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{
-        duration: 0.6,
-        delay: step * 0.07,
-        ease: [0.22, 1, 0.36, 1],
-      }}
+      style={step ? ({ '--reveal-delay': `${step * 70}ms` } as React.CSSProperties) : undefined}
     >
       {children}
-    </Component>
+    </Tag>
   )
 }
