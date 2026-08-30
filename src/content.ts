@@ -12,9 +12,15 @@ export const profile = {
   role: 'Engineer',
   disciplines: ['Embedded Linux', 'Robotics', 'Full-stack'],
   location: 'Gurugram, India',
-  /* Set in the left margin, read bottom to top. Same coordinates as the globe's
-     home pin, so the two can't drift apart. */
+  /* Set in the right margin, read top to bottom. Same coordinates as the
+     globe's home pin, so the two can't drift apart. */
   coordinates: '28.4595\u00B0 N   77.0266\u00B0 E',
+  /* Set down the left margin. Attributed on purpose — an unattributed line in
+     someone's own margin reads as their own. */
+  quote: {
+    text: "If you don't take risks, you can't create a future",
+    source: 'Monkey D. Luffy',
+  },
   tagline: 'I build the layer between hardware and the people who depend on it.',
   intro: `I'm an Electronics & Communication engineer who kept drifting toward the
     seam where firmware meets software. I've written RTL for a RISC-V core in

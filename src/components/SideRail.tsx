@@ -32,7 +32,7 @@ export function SideRail() {
   return (
     <>
       <Rail />
-      <Coordinates />
+      <MarginType />
     </>
   )
 }
@@ -126,26 +126,43 @@ function Rail() {
 }
 
 /**
- * Vertical type at the far edge of the left margin.
+ * Vertical type in the margins: a line down the left, the home pin's
+ * coordinates down the right.
  *
- * Reads bottom to top, the convention for a left-hand margin — the other
- * direction makes you tilt your head the wrong way.
+ * Both read the way their side wants to be read — left margins bottom to top,
+ * right margins top to bottom. The other direction on either side makes you
+ * tilt your head the wrong way.
  *
  * Anchored to the viewport rather than to the content column, unlike the rail:
- * pinned to the column it moved inward as the window narrowed and ended up
- * 12px from the rail. Here it stays at the edge and the gap between the two
- * only ever grows. It waits for 1700px, which is where the rail's labels are
- * clear of it.
+ * pinned to the column they drift inward as the window narrows, and the left
+ * one finished 12px off the rail. At the edges the gaps only grow. They wait
+ * for 1700px, which is where the rail's labels are clear of them.
  */
-function Coordinates() {
+function MarginType() {
   return (
-    <span
-      aria-hidden
-      className="pointer-events-none fixed bottom-16 left-8 z-30 hidden font-mono text-[0.6rem] tracking-[0.42em] whitespace-nowrap text-ink-faint/70 uppercase [writing-mode:vertical-rl] [@media(min-width:1700px)]:block"
-    >
-      <span className="rotate-180 [writing-mode:vertical-rl]">
+    <>
+      <span
+        aria-hidden
+        className="pointer-events-none fixed bottom-16 left-8 z-30 hidden items-end gap-3 font-mono text-[0.6rem] tracking-[0.3em] whitespace-nowrap text-ink-faint/70 uppercase [writing-mode:vertical-rl] [@media(min-width:1700px)]:flex"
+      >
+        {/* Attribution first in the DOM so it ends up above the quote. The
+            column is read bottom to top, so the eye reaches whatever sits
+            lowest first — with the quote on top you read the name before the
+            line it belongs to. */}
+        <span className="rotate-180 text-ink-faint/50 [writing-mode:vertical-rl]">
+          — {profile.quote.source}
+        </span>
+        <span className="rotate-180 [writing-mode:vertical-rl]">
+          {profile.quote.text}
+        </span>
+      </span>
+
+      <span
+        aria-hidden
+        className="pointer-events-none fixed top-32 right-8 z-30 hidden font-mono text-[0.6rem] tracking-[0.42em] whitespace-nowrap text-ink-faint/60 uppercase [writing-mode:vertical-rl] [@media(min-width:1700px)]:block"
+      >
         {profile.coordinates}
       </span>
-    </span>
+    </>
   )
 }
