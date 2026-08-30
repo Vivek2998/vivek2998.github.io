@@ -70,7 +70,11 @@ export function SideRail() {
       aria-hidden
       className="pointer-events-none fixed inset-y-0 left-1/2 z-30 hidden w-full max-w-6xl -translate-x-1/2 xl:block"
     >
-      <div className="absolute top-24 bottom-14 -left-8 w-px [@media(min-width:1440px)]:-left-10">
+      {/* Sits well clear of the column — at 40px the rail read as attached to
+          the content rather than as its own thing in the margin. 1280 is the
+          exception: pushing out that far there would put the ticks off the
+          left edge of the screen. */}
+      <div className="absolute top-24 bottom-14 -left-9 w-px [@media(min-width:1440px)]:-left-16">
         {/* Track, then the part of it you've already passed. */}
         <span className="absolute inset-0 bg-ink-faint/30" />
         <span ref={fillRef} className="absolute top-0 left-0 w-px bg-signal/60" />
@@ -84,7 +88,7 @@ export function SideRail() {
               style={{ top: `${pct}%` }}
             >
               <span
-                className={`hidden font-mono text-[0.6rem] tracking-[0.16em] whitespace-nowrap text-signal uppercase transition-opacity duration-300 [@media(min-width:1440px)]:block ${
+                className={`hidden font-mono text-[0.6rem] tracking-[0.16em] whitespace-nowrap text-signal uppercase transition-opacity duration-300 2xl:block ${
                   on ? 'opacity-100' : 'opacity-0'
                 }`}
               >

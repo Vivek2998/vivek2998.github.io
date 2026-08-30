@@ -389,8 +389,10 @@ export function HeroScene({ className }: { className?: string }) {
       const bx = flip ? x - 14 - boxW : x + 14
       const by = y - boxH / 2
 
-      // 4px of breathing room, so labels don't end up flush against each other.
-      const GAP = 4
+      /* Breathing room between labels. At 4px two of them could sit seven
+         pixels apart, clear the test, and still read as crowded — so a label
+         has to find a properly clear spot or not be drawn at all. */
+      const GAP = 14
       const collides = claimed.some(
         ([cx, cy, cw, ch]) =>
           bx < cx + cw + GAP &&
