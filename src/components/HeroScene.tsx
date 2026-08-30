@@ -197,6 +197,9 @@ export function HeroScene({ className }: { className?: string }) {
       if (radius <= 0) return
       syncRotation()
 
+      // Below lg the globe is behind the copy, not draggable, and dimmed.
+      const decorative = window.innerWidth < 1024
+
       /* No fill of any kind.
          An earlier pass shaded the disc to fake volume and it turned the globe
          into a frosted marble. The sphere should stay something you look
@@ -238,7 +241,6 @@ export function HeroScene({ className }: { className?: string }) {
          breakpoint the globe isn't draggable and sits at reduced opacity, so
          it's decoration, and phones are exactly where the frame budget is
          tightest. */
-      const decorative = window.innerWidth < 1024
       const stride = decorative ? 3 : radius < 185 ? 2 : 1
 
       const halfW = width / 2
@@ -300,9 +302,9 @@ export function HeroScene({ className }: { className?: string }) {
       const order = pinVectors
         .map((v, i) => ({ i, z: project(v).z }))
         .sort((a, b) => a.z - b.z)
+        .filter(({ z }) => z > 0.06)
 
       for (const { i, z } of order) {
-        if (z <= 0.06) continue
         const pin = globePins[i]
         const s = pinScreen[i]
         const isHome = pin.home
@@ -330,7 +332,35 @@ export function HeroScene({ className }: { className?: string }) {
         ctx.lineWidth = 1.5
         ctx.stroke()
 
-        drawLabel(pin, s.x, s.y, alpha, active)
+      }
+
+      /* Labels last, in a pass of their own.
+         Nearest first, and each one claims a rectangle — a label that would
+         land on top of one already placed is dropped instead of drawn into it.
+         Pins bunched near the limb used to stack into something unreadable.
+         The hovered pin is moved to the front of the queue so it always wins
+         its space.
+
+         Skipped entirely while the globe is decorative: down there it sits
+         behind the headline and can't be hovered, so the labels were landing
+         on the copy for no benefit at all. */
+      if (!decorative) {
+        const claimed: Array<[number, number, number, number]> = []
+        const labelOrder = [...order].reverse()
+        const hoveredAt = labelOrder.findIndex((o) => o.i === hovered)
+        if (hoveredAt > 0) labelOrder.unshift(...labelOrder.splice(hoveredAt, 1))
+
+        for (const { i, z } of labelOrder) {
+          const s = pinScreen[i]
+          drawLabel(
+            globePins[i],
+            s.x,
+            s.y,
+            Math.min(1, (z - 0.06) * 4),
+            hovered === i,
+            claimed,
+          )
+        }
       }
     }
 
@@ -340,6 +370,7 @@ export function HeroScene({ className }: { className?: string }) {
       y: number,
       alpha: number,
       active: boolean,
+      claimed: Array<[number, number, number, number]>,
     ) => {
       // Only the hovered pin gets its place line; the rest show just a name so
       // six labels at once don't turn into soup.
@@ -357,6 +388,18 @@ export function HeroScene({ className }: { className?: string }) {
       const flip = x + 14 + boxW > width
       const bx = flip ? x - 14 - boxW : x + 14
       const by = y - boxH / 2
+
+      // 4px of breathing room, so labels don't end up flush against each other.
+      const GAP = 4
+      const collides = claimed.some(
+        ([cx, cy, cw, ch]) =>
+          bx < cx + cw + GAP &&
+          bx + boxW + GAP > cx &&
+          by < cy + ch + GAP &&
+          by + boxH + GAP > cy,
+      )
+      if (collides && !active) return
+      claimed.push([bx, by, boxW, boxH])
 
       ctx.beginPath()
       ctx.roundRect(bx, by, boxW, boxH, 6)
