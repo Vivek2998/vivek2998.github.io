@@ -2,10 +2,12 @@ import { Section } from './Section'
 import { Reveal } from './Reveal'
 import { profile, skills } from '../content'
 
-/** A few numbers that are true and checkable, rather than invented "10+ projects". */
+/* Three things that are true and checkable, rather than invented "10+ projects".
+   Counting my own disciplines and calling it a statistic used to sit in the
+   middle slot; naming the machine says more and can be looked up. */
 const facts = [
   { value: '2021', label: 'Graduated, B.E. ECE' },
-  { value: '3', label: 'Engineering disciplines' },
+  { value: 'Mantra 3.0', label: "SSI's surgical robot — I test it in production" },
   { value: 'RV32I', label: 'RISC-V core, in Verilog' },
 ]
 
@@ -50,8 +52,9 @@ export function About() {
               Currently
             </p>
             <p className="mt-4 leading-relaxed text-ink">
-              Working across embedded Linux and robotics — building images that boot
-              identically every time, and the tooling that proves they do.
+              On a production floor most days, checking a surgical robot's actuators
+              behave before the unit ships. Away from it, building the embedded
+              Linux that machines like it boot.
             </p>
 
             <div className="mt-7 space-y-5">

@@ -14,15 +14,17 @@ export const profile = {
   location: 'Gurugram, India',
   tagline: 'I build the layer between hardware and the people who depend on it.',
   intro: `I'm an Electronics & Communication engineer who kept drifting toward the
-    seam where firmware meets software. I've designed RTL for a RISC-V core, shipped
-    test automation for surgical robotics, and built Yocto-based Linux images for
-    medical appliances — plus the web tooling that makes any of it usable.`,
+    seam where firmware meets software. I've written RTL for a RISC-V core in
+    Verilog, and I spend my days on the production floor making sure a surgical
+    robot's actuators do what they were told before the unit ships. On my own time
+    I build the embedded Linux that machines like it boot, and the tooling that
+    makes them configurable without someone editing files by hand.`,
   secondary: `Away from the terminal I sketch, watch far too much anime, and take the
     bike out when the roads are empty.`,
   /* Rotates in the hero. Keep these short — they're typed out one at a time. */
   rotatingRoles: [
     'embedded Linux',
-    'robotics test automation',
+    'robotics testing',
     'RTL design',
     'full-stack web',
   ],
@@ -107,13 +109,15 @@ export type TimelineEntry = {
 export const journey: TimelineEntry[] = [
   {
     period: 'Dec 2023 — Present',
-    title: 'Testing Engineer',
+    title: 'Robotics Testing Engineer',
     org: 'SS Innovations',
     kind: 'work',
     current: true,
-    detail: `Testing surgical robotic systems, where a missed defect is not a bug
-      report. Building and running verification for hardware-in-the-loop behaviour,
-      and writing the tooling that makes regressions reproducible.`,
+    detail: `Production testing on the SSI Mantra 3.0 surgical robot. I put its
+      actuators through their paces using Elmo's motion tooling and Actin, and read
+      the EtherCAT bus with EC-Engineer and EC-Inspector when an axis doesn't do
+      what the command said. Production rather than R&D: the units I test are the
+      ones that go to hospitals, so a defect I miss is not a bug report.`,
   },
   {
     period: 'Mar 2023 — Dec 2023',
@@ -192,10 +196,12 @@ export const projects: Project[] = [
     featured: true,
     private: true,
     blurb: 'A Yocto-based embedded Linux platform for medical and robotic appliances.',
-    detail: `Custom BitBake layers producing reproducible Linux images for appliances
-      that have to boot the same way every time. Covers the image recipes, the
-      device-side Python services, and the shell tooling that ties a build to a
-      specific piece of hardware.`,
+    detail: `A Linux image for a medical appliance, running on a Raspberry Pi CM4.
+      Windows was far too heavy for the job, and Raspberry Pi OS meant inheriting a
+      pile of software I hadn't chosen and couldn't account for — on a medical
+      device, "it came with the distro" is not an answer. Yocto builds the image
+      from the bottom up instead: every package is in there because I put it there,
+      and the same recipe produces the same image every time.`,
     stack: ['Yocto', 'BitBake', 'Embedded Linux', 'Python', 'Shell'],
   },
   {
@@ -208,7 +214,7 @@ export const projects: Project[] = [
       with a live, draggable in-browser simulation. Read the solution, move a slider,
       watch the equation change. The bet: build one well-engineered simulation
       engine, and a thousand simulations become incremental.`,
-    stack: ['Astro 5', 'React 19', 'TypeScript', 'Pixi.js', 'MDX'],
+    stack: ['Astro 5', 'React 19', 'TypeScript', 'Pixi.js', 'React Three Fiber', 'MDX'],
     repo: 'https://github.com/Vivek2998/physix',
   },
   {
@@ -218,10 +224,13 @@ export const projects: Project[] = [
     featured: true,
     private: true,
     blurb: 'Configuration manager for a robotic application, with a real installer.',
-    detail: `A desktop configuration tool for robotic systems — Python at the core,
-      a TypeScript front end, and an Inno Setup installer so it ships as a signed
-      Windows executable rather than a folder of scripts. Comes with its own release
-      channel and a small landing site for email confirmation.`,
+    detail: `Before this, configuring a machine meant making the same edits by hand,
+      once per unit. It was slow, and it was the kind of slow that manufactures
+      mistakes — one mistyped value and you spend the afternoon debugging hardware
+      that was never broken. This turns it into a single guided pass. Python at the
+      core, a TypeScript front end, and an Inno Setup installer so it ships as a
+      signed Windows executable rather than a folder of scripts, with its own
+      release channel and a small landing site for email confirmation.`,
     stack: ['Python', 'TypeScript', 'Inno Setup', 'Batch', 'Shell'],
     repo: 'https://github.com/Vivek2998/mantra-config-installer',
   },
