@@ -141,20 +141,14 @@ function Rail() {
 function MarginType() {
   return (
     <>
+      {/* Carries real weight and colour. At 0.6rem in ink-faint/70 it sat
+          around 2.8:1 — the sort of thing you only notice once you're looking
+          for it, which is not what a line down the margin is for. */}
       <span
         aria-hidden
-        className="pointer-events-none fixed bottom-16 left-8 z-30 hidden items-end gap-3 font-mono text-[0.6rem] tracking-[0.3em] whitespace-nowrap text-ink-faint/70 uppercase [writing-mode:vertical-rl] [@media(min-width:1700px)]:flex"
+        className="pointer-events-none fixed bottom-16 left-20 z-30 hidden rotate-180 font-mono text-[0.65rem] font-medium tracking-[0.28em] whitespace-nowrap text-ink-faint uppercase [writing-mode:vertical-rl] [@media(min-width:1700px)]:block"
       >
-        {/* Attribution first in the DOM so it ends up above the quote. The
-            column is read bottom to top, so the eye reaches whatever sits
-            lowest first — with the quote on top you read the name before the
-            line it belongs to. */}
-        <span className="rotate-180 text-ink-faint/50 [writing-mode:vertical-rl]">
-          — {profile.quote.source}
-        </span>
-        <span className="rotate-180 [writing-mode:vertical-rl]">
-          {profile.quote.text}
-        </span>
+        {profile.quote}
       </span>
 
       <span
