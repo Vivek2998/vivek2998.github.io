@@ -262,9 +262,9 @@ export const projects: Project[] = [
       instructions and misaligned access all raise exceptions, mret returns from
       them, and the CSR file covers mstatus, misa, mie, mip, mtvec, mscratch,
       mepc, mcause, mtval, mcycle and minstret. Around 3,200 lines of Verilog,
-      simulated and synthesised on Vivado. One block came with the course; the
-      rest are mine. It's why I still reach for a waveform viewer when something
-      misbehaves.`,
+      simulated and synthesised on Vivado. The machine counter — the block
+      behind mcycle and minstret — came with the course; the rest I wrote. It's
+      why I still reach for a waveform viewer when something misbehaves.`,
     stack: ['Verilog HDL', 'RV32I', 'VLSI', 'Xilinx Vivado'],
   },
   {
