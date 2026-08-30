@@ -1,31 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { profile, sections } from '../content'
+import { useActiveSection } from '../hooks/useActiveSection'
 
 export function Nav() {
-  const [active, setActive] = useState<string>(sections[0].id)
+  const active = useActiveSection()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const listRef = useRef<HTMLUListElement>(null)
   const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
-
-  // Highlight whichever section currently owns the middle of the viewport.
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
-        if (visible) setActive(visible.target.id)
-      },
-      { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.25, 0.5, 1] },
-    )
-
-    for (const { id } of sections) {
-      const el = document.getElementById(id)
-      if (el) observer.observe(el)
-    }
-    return () => observer.disconnect()
-  }, [])
 
   /* The sliding pill is a single positioned element measured against the active
      link, rather than an animation library laying out a shared element. */

@@ -1,5 +1,6 @@
 import { Aurora } from './components/Aurora'
 import { Nav } from './components/Nav'
+import { SideRail } from './components/SideRail'
 import { Hero } from './components/Hero'
 import { About } from './components/About'
 import { Work } from './components/Work'
@@ -13,6 +14,7 @@ export default function App() {
     <>
       <Aurora />
       <Nav />
+      <SideRail />
       <main>
         <Hero />
         <About />
