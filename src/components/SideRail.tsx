@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { sections } from '../content'
+import { profile, sections } from '../content'
 import { useActiveSection } from '../hooks/useActiveSection'
 
 type Mark = { id: string; label: string; pct: number }
@@ -26,6 +26,15 @@ type Mark = { id: string; label: string; pct: number }
  * repeating them would only read the same list to a screen reader twice.
  */
 export function SideRail() {
+  return (
+    <>
+      <Rail />
+      <Coordinates />
+    </>
+  )
+}
+
+function Rail() {
   const active = useActiveSection()
   const [marks, setMarks] = useState<Mark[]>([])
   const fillRef = useRef<HTMLSpanElement>(null)
@@ -103,6 +112,32 @@ export function SideRail() {
           )
         })}
       </div>
+
     </div>
+  )
+}
+
+/**
+ * Vertical type at the far edge of the left margin.
+ *
+ * Reads bottom to top, the convention for a left-hand margin — the other
+ * direction makes you tilt your head the wrong way.
+ *
+ * Anchored to the viewport rather than to the content column, unlike the rail:
+ * pinned to the column it moved inward as the window narrowed and ended up
+ * 12px from the rail. Here it stays at the edge and the gap between the two
+ * only ever grows. It waits for 1700px, which is where the rail's labels are
+ * clear of it.
+ */
+function Coordinates() {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none fixed bottom-16 left-8 z-30 hidden font-mono text-[0.6rem] tracking-[0.42em] whitespace-nowrap text-ink-faint/70 uppercase [writing-mode:vertical-rl] [@media(min-width:1700px)]:block"
+    >
+      <span className="rotate-180 [writing-mode:vertical-rl]">
+        {profile.coordinates}
+      </span>
+    </span>
   )
 }

@@ -52,27 +52,27 @@ export function ActionButton({
           {children}
         </span>
 
-        {/* One arrow that lengthens, drawn as a shaft plus a separate head.
+        {/* One path, two subpaths, one stroke — a real arrow.
 
-            It used to be two whole arrows crossfading through a slot exactly
-            one arrow wide. Halfway through, the outgoing arrow's shaft sat in
-            the right half of the slot while the incoming arrow's head sat in
-            the left half — so you read a head, then a shaft, and it looked
-            like two arrows rather than one moving.
+            Two earlier attempts were worse than the thing they replaced. The
+            first crossfaded two whole arrows through a slot one arrow wide, so
+            halfway through you saw the head of one beside the shaft of the
+            other. The second built the arrow out of a div for the shaft and an
+            SVG for the head so it could lengthen, which is two elements
+            pretending to be one glyph and looks it.
 
-            The shaft scales from its left edge by 4px and the head travels the
-            same 4px, so they stay joined and there is only ever one arrow. The
-            slot is wide enough for the grown state, so nothing reflows. */}
-        <span aria-hidden className="ml-2 flex h-[15px] w-[20px] items-center">
-          <span className="h-[1.6px] w-[10px] origin-left rounded-full bg-current transition-transform duration-300 ease-out group-hover:scale-x-[1.4]" />
+            The motion is just travel now. The slot is fixed so nothing
+            reflows, and overflow is clipped so the arrow slides under the
+            button's edge rather than escaping it. */}
+        <span aria-hidden className="ml-2 h-[15px] w-[18px] overflow-hidden">
           <svg
-            width="7"
-            height="11"
-            viewBox="0 0 7 11"
-            className="-ml-px shrink-0 transition-transform duration-300 ease-out group-hover:translate-x-[4px]"
+            width="15"
+            height="15"
+            viewBox="0 0 15 15"
+            className="transition-transform duration-300 ease-out group-hover:translate-x-[5px]"
           >
             <path
-              d="M1 1l4.6 4.5L1 10"
+              d="M1.5 7.5h11M8.5 3.5l4 4-4 4"
               stroke="currentColor"
               strokeWidth="1.6"
               strokeLinecap="round"
