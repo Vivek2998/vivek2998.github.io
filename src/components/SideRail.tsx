@@ -141,12 +141,13 @@ function Rail() {
 function MarginType() {
   return (
     <>
-      {/* Carries real weight and colour. At 0.6rem in ink-faint/70 it sat
+      {/* Carries real colour, but not extra weight — bold read as heavy-handed
+          for a margin. At 0.6rem in ink-faint/70 it sat
           around 2.8:1 — the sort of thing you only notice once you're looking
           for it, which is not what a line down the margin is for. */}
       <span
         aria-hidden
-        className="pointer-events-none fixed bottom-16 left-20 z-30 hidden rotate-180 font-mono text-[0.65rem] font-medium tracking-[0.28em] whitespace-nowrap text-ink-faint uppercase [writing-mode:vertical-rl] [@media(min-width:1700px)]:block"
+        className="pointer-events-none fixed bottom-16 left-20 z-30 hidden rotate-180 font-mono text-[0.65rem] tracking-[0.28em] whitespace-nowrap text-ink-faint uppercase [writing-mode:vertical-rl] [@media(min-width:1700px)]:block"
       >
         {profile.quote}
       </span>

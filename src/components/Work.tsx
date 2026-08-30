@@ -151,6 +151,12 @@ function CompactRow({ project, step }: { project: Project; step: number }) {
 
         <p className="text-accent mt-2 text-sm text-pretty">{project.blurb}</p>
 
+        {/* Smaller and quieter than the featured cards' copy, so these stay
+            secondary while still getting to say what they are. */}
+        <p className="mt-3 text-xs leading-relaxed text-ink-muted text-pretty">
+          {project.detail}
+        </p>
+
         <div className="mt-4 flex flex-wrap gap-1.5">
           {project.stack.map((tech) => (
             <Badge key={tech}>{tech}</Badge>

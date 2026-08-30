@@ -254,12 +254,18 @@ export const projects: Project[] = [
     name: 'RISC-V RV32I Core',
     accent: 'lime',
     year: '2021',
-    blurb: 'A 32-bit RISC-V integer core, designed block by block in Verilog.',
-    detail: `Register file, ALU, control unit and datapath written as RTL, then
-      simulated and synthesised on Xilinx Vivado. Built during the Maven Silicon
-      programme and the reason I still reach for a waveform viewer when something
+    blurb: 'A machine-mode RV32I core in Verilog, written block by block.',
+    detail: `Sixteen blocks — ALU, decoder, integer file, immediate generator
+      and adder, branch unit, load and store units, the pipeline registers and
+      the muxes — each built as its own design, then wired into one top module.
+      It traps properly rather than just executing: ecall, ebreak, illegal
+      instructions and misaligned access all raise exceptions, mret returns from
+      them, and the CSR file covers mstatus, misa, mie, mip, mtvec, mscratch,
+      mepc, mcause, mtval, mcycle and minstret. Around 3,200 lines of Verilog,
+      simulated and synthesised on Vivado. One block came with the course; the
+      rest are mine. It's why I still reach for a waveform viewer when something
       misbehaves.`,
-    stack: ['Verilog HDL', 'VLSI', 'Xilinx Vivado'],
+    stack: ['Verilog HDL', 'RV32I', 'VLSI', 'Xilinx Vivado'],
   },
   {
     name: 'personal_portfolio',
