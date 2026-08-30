@@ -297,7 +297,7 @@ export const rebuild = {
     year: '2023',
     caption: 'Hand-written, no build step',
     image: '/compare/2023.webp',
-    alt: 'The 2023 portfolio: a plain white page with a centred heading and a large empty gap below it.',
+    alt: 'the 2023 portfolio — a plain white page with a centred heading and a large empty gap below it.',
     body: `I wrote every line of it myself — HTML, CSS and JavaScript in one
       1,100-line file, with Bootstrap 5, the Argon design system, Swiper and
       jQuery pulled in from CDNs. No bundler, no generator. It was genuinely the
@@ -307,7 +307,7 @@ export const rebuild = {
     year: '2026',
     caption: 'Rebuilt, with AI in the loop',
     image: '/compare/2026.webp',
-    alt: 'The 2026 portfolio: a warm bone page with an interactive globe, a monospace subtitle and a structured hero.',
+    alt: 'the 2026 portfolio — a warm bone page with an interactive globe, a monospace subtitle and a structured hero.',
     body: `I move a lot faster now, and I don't pretend I did this one alone. But
       speed was never the thing that was missing.`,
   },

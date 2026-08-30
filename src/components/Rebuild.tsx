@@ -15,11 +15,16 @@ function Compare() {
   const { before, after } = rebuild
 
   return (
-    <div className="group relative aspect-[1280/800] w-full overflow-hidden rounded-panel border border-hairline select-none">
-      {/* 2026 sits underneath, full width. */}
+    <figure className="group relative aspect-[1280/800] w-full overflow-hidden rounded-panel border border-hairline bg-surface select-none">
+      {/* Both images carry alt="" and the description lives in the caption
+          below instead. An <img> that hasn't arrived yet renders its alt text,
+          and two sentences of it sprawling across the frame — overlapping,
+          since both are absolutely positioned — reads as a broken page rather
+          than a loading one. Empty alt means the gap is just the panel's own
+          background until the picture lands. */}
       <img
         src={after.image}
-        alt={after.alt}
+        alt=""
         width={1280}
         height={800}
         loading="lazy"
@@ -34,7 +39,7 @@ function Compare() {
       >
         <img
           src={before.image}
-          alt={before.alt}
+          alt=""
           width={1280}
           height={800}
           loading="lazy"
@@ -42,6 +47,11 @@ function Compare() {
           className="absolute inset-0 h-full w-full object-cover object-top"
         />
       </div>
+
+      <figcaption className="sr-only">
+        A slider comparing two versions of this site. On the left, {before.alt}{' '}
+        On the right, {after.alt}
+      </figcaption>
 
       {/* Year labels, each fading out as the handle passes over it. */}
       <span
@@ -86,7 +96,7 @@ function Compare() {
         aria-label={`Reveal the ${before.year} site on the left, the ${after.year} site on the right`}
         className="absolute inset-0 h-full w-full cursor-ew-resize appearance-none bg-transparent opacity-0"
       />
-    </div>
+    </figure>
   )
 }
 
