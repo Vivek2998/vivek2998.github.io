@@ -21,7 +21,7 @@ export function Section({ id, index, title, lead, accent = 'teal', children }: P
     <section
       id={id}
       style={{ '--accent': accentVar(accent) } as React.CSSProperties}
-      className="relative scroll-mt-24 py-24 sm:py-32"
+      className="relative scroll-mt-24 py-20 sm:py-24"
     >
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <Reveal>
