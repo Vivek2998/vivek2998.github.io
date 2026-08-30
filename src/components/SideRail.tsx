@@ -22,8 +22,11 @@ type Mark = { id: string; label: string; pct: number }
  * Everything grows leftward from the line, out into the margin — an earlier
  * version ran the labels inward and they sat 22px on top of the content.
  *
- * Decorative, and marked as such: the nav already offers these jumps, so
- * repeating them would only read the same list to a screen reader twice.
+ * The ticks are real links, not decoration with a hover trick: revealing a name
+ * on hover invites a click, and a target that lights up and does nothing is
+ * worse than one that never lit up. The track and the fill behind them stay
+ * decorative and hidden from assistive tech; the links themselves are exposed,
+ * which is a second route to the same sections rather than a trap.
  */
 export function SideRail() {
   return (
@@ -75,40 +78,45 @@ function Rail() {
   }, [])
 
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none fixed inset-y-0 left-1/2 z-30 hidden w-full max-w-6xl -translate-x-1/2 xl:block"
-    >
+    <div className="pointer-events-none fixed inset-y-0 left-1/2 z-30 hidden w-full max-w-6xl -translate-x-1/2 xl:block">
       {/* Sits well clear of the column — at 40px the rail read as attached to
           the content rather than as its own thing in the margin. 1280 is the
           exception: pushing out that far there would put the ticks off the
           left edge of the screen. */}
       <div className="absolute top-24 bottom-14 -left-9 w-px [@media(min-width:1440px)]:-left-16">
         {/* Track, then the part of it you've already passed. */}
-        <span className="absolute inset-0 bg-ink-faint/30" />
-        <span ref={fillRef} className="absolute top-0 left-0 w-px bg-signal/60" />
+        <span aria-hidden className="absolute inset-0 bg-ink-faint/30" />
+        <span aria-hidden ref={fillRef} className="absolute top-0 left-0 w-px bg-signal/60" />
 
         {marks.map(({ id, label, pct }) => {
           const on = active === id
           return (
-            <div
+            <a
               key={id}
-              className="absolute right-0 flex -translate-y-1/2 items-center gap-2.5"
+              href={`#${id}`}
+              aria-current={on ? 'true' : undefined}
+              /* py-2 only: the row is pinned by its right edge to the line, so
+                 horizontal padding would drag the tick off it. */
+              className="group pointer-events-auto absolute right-0 flex -translate-y-1/2 items-center gap-2.5 py-2"
               style={{ top: `${pct}%` }}
             >
+              {/* Hidden below 2xl because there is nowhere for it to go — at
+                  1440 the longest label runs off the left of the screen. */}
               <span
-                className={`hidden font-mono text-[0.6rem] tracking-[0.16em] whitespace-nowrap text-signal uppercase transition-opacity duration-300 2xl:block ${
-                  on ? 'opacity-100' : 'opacity-0'
+                className={`hidden font-mono text-[0.6rem] tracking-[0.16em] whitespace-nowrap text-signal uppercase transition-opacity duration-200 2xl:block ${
+                  on ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
                 }`}
               >
                 {label}
               </span>
               <span
-                className={`h-px transition-all duration-300 ${
-                  on ? 'w-6 bg-signal' : 'w-2.5 bg-ink-faint/65'
+                className={`h-px transition-all duration-200 ${
+                  on
+                    ? 'w-6 bg-signal'
+                    : 'w-2.5 bg-ink-faint/65 group-hover:w-5 group-hover:bg-signal group-focus-visible:w-5 group-focus-visible:bg-signal'
                 }`}
               />
-            </div>
+            </a>
           )
         })}
       </div>
