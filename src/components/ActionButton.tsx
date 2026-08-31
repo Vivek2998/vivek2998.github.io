@@ -48,9 +48,9 @@ export function ActionButton({
       />
 
       <span className="relative flex items-center">
-        <span className="transition-transform duration-300 ease-out group-hover:-translate-x-0.5">
-          {children}
-        </span>
+        {/* The label stays put. Sliding it as well as the arrow made the whole
+            button look like it was shuffling rather than pointing. */}
+        <span>{children}</span>
 
         {/* One path, two subpaths, one stroke — a real arrow.
 

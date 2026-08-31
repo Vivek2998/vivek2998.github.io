@@ -132,6 +132,16 @@ export function Contact() {
 
   const showForm = () => {
     clearTimers()
+    /* With the form already open this button used to do nothing at all —
+       goTo returns early when you're on the panel you asked for, so it just
+       sat there reading "Fill in the form" and ignoring clicks. Now it does
+       what it says and puts the cursor in the first field. */
+    if (panelRef.current === 'form') {
+      document
+        .querySelector<HTMLInputElement>('#contact-panel input[name="name"]')
+        ?.focus()
+      return
+    }
     goTo('form')
   }
 
@@ -188,22 +198,34 @@ export function Contact() {
               {panel !== 'socials' && (
                 <button
                   type="button"
+                  /* goTo, not setPanel. Setting the state directly left
+                     panelRef pointing at 'form', so the next goTo('form') saw
+                     itself as already there and returned — the form could be
+                     closed once and never reopened. */
                   onClick={() => {
                     clearTimers()
-                    setPanel('socials')
+                    goTo('socials')
                   }}
                   className="font-mono text-xs text-ink-faint underline-offset-4 transition-colors hover:text-ink hover:underline"
                 >
-                  show links instead
+                  show links
                 </button>
               )}
             </div>
           </div>
         </Reveal>
 
-        {/* Swaps between the social links, the form, and the confirmation —
-            all in the same slot so the section never jumps height. */}
-        <Reveal step={1}>
+        {/* Swaps between the social links, the form and the confirmation.
+            The slot holds a floor height so the section doesn't resize as they
+            change — the form is taller than the links, and without it the whole
+            section grew and shunted itself down the page mid-interaction. */}
+        {/* A floor under the slot, so swapping panels can't resize the section.
+            Measured: the links are 356px tall on desktop against the form's
+            300, and at the sm breakpoint they drop to 172 against the same 300
+            — so the section was shrinking 56px on desktop and growing 128px on
+            tablet mid-interaction. Each floor is the taller of the two states
+            at that width. */}
+        <Reveal step={1} className="min-h-[356px] sm:min-h-[300px] lg:min-h-[356px]">
           <div id="contact-panel" className="h-full">
             {/* The outgoing panel is taken out of flow so the incoming one
                 sets the height and the two overlap mid-slide. The wrapper is
