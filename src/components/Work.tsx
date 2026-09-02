@@ -1,8 +1,11 @@
-import { useRef, type ReactNode } from 'react'
+import { Suspense, lazy, useRef, useState, type ReactNode } from 'react'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 import { Section } from './Section'
 import { Reveal } from './Reveal'
 import { accentVar, projects, type Project } from '../content'
+
+/* Pulled in only when someone opens it — it carries the trace data with it. */
+const Pipeline = lazy(() => import('./Pipeline'))
 
 /**
  * The second place 3D shows up: cards pitch and yaw toward the cursor.
@@ -51,8 +54,30 @@ function Badge({ children }: { children: ReactNode }) {
   )
 }
 
-function ProjectLinks({ project }: { project: Project }) {
-  if (!project.repo && !project.demo) {
+/**
+ * The invitation to open the pipeline replay.
+ *
+ * Deliberately a button and not a link: it opens something in place rather than
+ * navigating, and the label animates on its own so it does not read as one more
+ * static row of metadata.
+ */
+function WalkthroughButton({ onOpen }: { onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group inline-flex items-center gap-1.5 font-mono text-xs transition-opacity hover:opacity-80"
+    >
+      <span aria-hidden className="text-accent transition-transform group-hover:translate-x-0.5">
+        ▸
+      </span>
+      <span className="walkthrough-label">watch it run, cycle by cycle</span>
+    </button>
+  )
+}
+
+function ProjectLinks({ project, onWalkthrough }: { project: Project; onWalkthrough?: () => void }) {
+  if (!project.repo && !project.demo && !project.walkthrough) {
     return (
       <span className="font-mono text-xs text-ink-faint">
         {project.private ? 'Private repository' : 'Not published'}
@@ -61,7 +86,8 @@ function ProjectLinks({ project }: { project: Project }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+      {project.walkthrough && onWalkthrough && <WalkthroughButton onOpen={onWalkthrough} />}
       {project.repo && (
         <a
           href={project.repo}
@@ -92,7 +118,7 @@ function ProjectLinks({ project }: { project: Project }) {
   )
 }
 
-function FeaturedCard({ project, step }: { project: Project; step: number }) {
+function FeaturedCard({ project, step, onWalkthrough }: { project: Project; step: number; onWalkthrough?: () => void }) {
   return (
     <Reveal step={step} as="article">
       <Tilt className="h-full">
@@ -129,7 +155,7 @@ function FeaturedCard({ project, step }: { project: Project; step: number }) {
           <div aria-hidden className="mt-7 flex-1" />
 
           <div className="border-t border-hairline pt-5">
-            <ProjectLinks project={project} />
+            <ProjectLinks project={project} onWalkthrough={onWalkthrough} />
           </div>
         </div>
       </Tilt>
@@ -137,7 +163,7 @@ function FeaturedCard({ project, step }: { project: Project; step: number }) {
   )
 }
 
-function CompactRow({ project, step }: { project: Project; step: number }) {
+function CompactRow({ project, step, onWalkthrough }: { project: Project; step: number; onWalkthrough?: () => void }) {
   return (
     <Reveal step={step} as="article" className="h-full">
       <div
@@ -166,13 +192,14 @@ function CompactRow({ project, step }: { project: Project; step: number }) {
         {/* Pushes the links to a shared baseline across the row. */}
         <div aria-hidden className="mt-5 flex-1" />
 
-        <ProjectLinks project={project} />
+        <ProjectLinks project={project} onWalkthrough={onWalkthrough} />
       </div>
     </Reveal>
   )
 }
 
 export function Work() {
+  const [walkthrough, setWalkthrough] = useState(false)
   const featured = projects.filter((p) => p.featured)
   const rest = projects.filter((p) => !p.featured)
 
@@ -186,15 +213,31 @@ export function Work() {
     >
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {featured.map((project, i) => (
-          <FeaturedCard key={project.name} project={project} step={i} />
+          <FeaturedCard
+            key={project.name}
+            project={project}
+            step={i}
+            onWalkthrough={() => setWalkthrough(true)}
+          />
         ))}
       </div>
 
       <div className="mt-5 grid gap-5 md:grid-cols-3">
         {rest.map((project, i) => (
-          <CompactRow key={project.name} project={project} step={i} />
+          <CompactRow
+            key={project.name}
+            project={project}
+            step={i}
+            onWalkthrough={() => setWalkthrough(true)}
+          />
         ))}
       </div>
+
+      {walkthrough && (
+        <Suspense fallback={null}>
+          <Pipeline onClose={() => setWalkthrough(false)} />
+        </Suspense>
+      )}
     </Section>
   )
 }

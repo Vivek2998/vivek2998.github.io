@@ -187,6 +187,8 @@ export type Project = {
   demo?: string
   /* `featured` items get the large card treatment at the top of the section. */
   featured?: boolean
+  /* Opens the cycle-by-cycle pipeline replay. Only the RV32I core has one. */
+  walkthrough?: boolean
   private?: boolean
   year: string
   /* Tints the card's heading, border and cursor sheen. */
@@ -267,6 +269,7 @@ export const projects: Project[] = [
       inverted CSR decode, a trap cause latched where nothing could read it.`,
     stack: ['Verilog HDL', 'RV32I', 'VLSI', 'Icarus Verilog', 'Xilinx Vivado'],
     repo: 'https://github.com/Vivek2998/riscv-rv32i-core',
+    walkthrough: true,
   },
   {
     name: 'personal_portfolio',

@@ -278,3 +278,45 @@
     transparent 62%
   );
 }
+
+/* ---------------------------------------------------------------------------
+   The walkthrough link
+
+   The one thing on the page that animates unprompted. A slow highlight travels
+   across the label so it reads as live rather than decorative, and it is the
+   only motion here that does not wait for the cursor — which is the point, as
+   it has to advertise that there is something behind it worth opening.
+--------------------------------------------------------------------------- */
+@keyframes walkthrough-sweep {
+  from {
+    background-position: 190% 0;
+  }
+  to {
+    background-position: -90% 0;
+  }
+}
+
+.walkthrough-label {
+  background-image: linear-gradient(
+    100deg,
+    var(--accent) 0%,
+    var(--accent) 40%,
+    color-mix(in oklab, var(--accent) 30%, var(--color-ink)) 50%,
+    var(--accent) 60%,
+    var(--accent) 100%
+  );
+  background-size: 280% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: walkthrough-sweep 4.5s linear infinite;
+}
+
+/* Reduced motion keeps the label, drops the travelling highlight. */
+@media (prefers-reduced-motion: reduce) {
+  .walkthrough-label {
+    animation: none;
+    background-image: none;
+    color: var(--accent);
+  }
+}
