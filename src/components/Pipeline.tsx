@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useReducedMotion } from '../hooks/useReducedMotion'
+import { Datapath } from './Datapath'
 import trace from '../data/pipelineTrace.json'
 
 /**
@@ -11,6 +12,10 @@ import trace from '../data/pipelineTrace.json'
  * This component only steps through the result — which is the point, because it
  * means the forwarding paths and the flush on a trap are the ones the hardware
  * actually took, not an illustration of what it ought to do.
+ *
+ * Two ways in. "How it works" follows a single sum through the datapath and
+ * assumes nothing; "cycle by cycle" is the engineer's view, three instructions
+ * in flight at once. Both read the same trace, and the friendly one opens first.
  */
 
 type Stage2 = {
@@ -193,6 +198,7 @@ function StageBox({
 }
 
 export default function Pipeline({ onClose }: { onClose: () => void }) {
+  const [view, setView] = useState<'datapath' | 'cycles'>('datapath')
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(true)
   const [speed, setSpeed] = useState(1)
@@ -200,6 +206,9 @@ export default function Pipeline({ onClose }: { onClose: () => void }) {
   const panelRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const activeLineRef = useRef<HTMLLIElement>(null)
+  /* Read inside the key handler, which is bound once. */
+  const viewRef = useRef(view)
+  viewRef.current = view
 
   const current = cycles[index]
   const { regs, lastWrite } = useMemo(() => registersAt(index), [index])
@@ -213,14 +222,14 @@ export default function Pipeline({ onClose }: { onClose: () => void }) {
   // Playback. Stops at the last cycle rather than looping, so the end of the
   // program is a place you arrive at rather than something that flicks past.
   useEffect(() => {
-    if (!playing) return
+    if (!playing || view !== 'cycles') return
     if (atEnd) {
       setPlaying(false)
       return
     }
     const id = window.setInterval(() => setIndex((i) => Math.min(cycles.length - 1, i + 1)), 900 / speed)
     return () => window.clearInterval(id)
-  }, [playing, speed, atEnd])
+  }, [playing, speed, atEnd, view])
 
   useEffect(() => {
     activeLineRef.current?.scrollIntoView({ block: 'nearest' })
@@ -233,8 +242,13 @@ export default function Pipeline({ onClose }: { onClose: () => void }) {
     document.body.style.overflow = 'hidden'
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-      else if (event.key === 'ArrowRight') step(1)
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      // The datapath view has its own controls; leave its keys alone.
+      if (viewRef.current !== 'cycles') return
+      if (event.key === 'ArrowRight') step(1)
       else if (event.key === 'ArrowLeft') step(-1)
       else if (event.key === ' ') {
         event.preventDefault()
@@ -268,7 +282,7 @@ export default function Pipeline({ onClose }: { onClose: () => void }) {
         className="glass accent-card flex max-h-full w-full max-w-5xl flex-col overflow-hidden"
       >
         {/* ---- header ---- */}
-        <div className="flex items-center justify-between gap-4 border-b border-hairline px-4 py-3 sm:px-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-4 py-3 sm:px-5">
           <div className="min-w-0">
             <h2 className="truncate text-sm font-semibold tracking-tight">
               RV32I core <span className="text-ink-faint">·</span>{' '}
@@ -278,10 +292,28 @@ export default function Pipeline({ onClose }: { onClose: () => void }) {
               a real Icarus Verilog trace, {cycles.length} cycles
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <span className="font-mono text-xs tabular-nums text-ink-muted">
-              cycle {current.cycle}/{cycles[cycles.length - 1].cycle}
-            </span>
+          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex rounded-lg border border-hairline p-0.5 font-mono text-[0.68rem]">
+              {(['datapath', 'cycles'] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={
+                    'rounded px-2 py-1 transition-colors ' +
+                    (view === v
+                      ? 'bg-[color-mix(in_oklab,var(--accent)_16%,transparent)] text-ink'
+                      : 'text-ink-faint hover:text-ink-muted')
+                  }
+                >
+                  {v === 'datapath' ? 'how it works' : 'cycle by cycle'}
+                </button>
+              ))}
+            </div>
+            {view === 'cycles' && (
+              <span className="font-mono text-xs tabular-nums text-ink-muted">
+                cycle {current.cycle}/{cycles[cycles.length - 1].cycle}
+              </span>
+            )}
             <button
               ref={closeRef}
               onClick={onClose}
@@ -294,6 +326,9 @@ export default function Pipeline({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* ---- body ---- */}
+        {view === 'datapath' && <Datapath />}
+
+        {view === 'cycles' && (
         <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[15rem_1fr]">
           {/* program listing */}
           <div className="hidden border-r border-hairline p-3 lg:block">
@@ -437,7 +472,10 @@ export default function Pipeline({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* ---- transport ---- */}
+        )}
+
+        {/* ---- transport, for the cycle view ---- */}
+        {view === 'cycles' && (
         <div className="flex flex-wrap items-center gap-3 border-t border-hairline px-4 py-3 sm:px-5">
           <button
             onClick={() => step(-1)}
@@ -490,8 +528,9 @@ export default function Pipeline({ onClose }: { onClose: () => void }) {
             ))}
           </div>
         </div>
+        )}
 
-        {!reduced && (
+        {!reduced && view === 'cycles' && (
           <span className="sr-only" aria-live="polite">
             cycle {current.cycle}: {caption(current)}
           </span>

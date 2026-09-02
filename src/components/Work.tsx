@@ -59,7 +59,9 @@ function Badge({ children }: { children: ReactNode }) {
  *
  * Deliberately a button and not a link: it opens something in place rather than
  * navigating, and the label animates on its own so it does not read as one more
- * static row of metadata.
+ * static row of metadata. The label names the smallest concrete thing behind it
+ * — an addition — rather than the machinery, because the view that opens first
+ * is the one written for people who do not already know what a pipeline is.
  */
 function WalkthroughButton({ onOpen }: { onOpen: () => void }) {
   return (
@@ -71,7 +73,7 @@ function WalkthroughButton({ onOpen }: { onOpen: () => void }) {
       <span aria-hidden className="text-accent transition-transform group-hover:translate-x-0.5">
         ▸
       </span>
-      <span className="walkthrough-label">watch it run, cycle by cycle</span>
+      <span className="walkthrough-label">watch it add two numbers</span>
     </button>
   )
 }

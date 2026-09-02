@@ -320,3 +320,34 @@
     color: var(--accent);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   The datapath diagram
+
+   A short dash travelling the length of a wire — about as close as a browser
+   gets to the way a signal is drawn moving through a circuit. Every wire
+   carries pathLength="100", so the animation is normalised: a long wire and a
+   short one take the same time and the whole diagram stays in step.
+--------------------------------------------------------------------------- */
+@keyframes wire-pulse {
+  from {
+    stroke-dashoffset: 8;
+  }
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+.wire-pulse {
+  stroke-dasharray: 8 100;
+  animation: wire-pulse 1.15s linear infinite;
+}
+
+/* Without motion the wire simply reads as carrying something, rather than
+   showing what travels along it. */
+@media (prefers-reduced-motion: reduce) {
+  .wire-pulse {
+    animation: none;
+    stroke-dasharray: none;
+  }
+}
