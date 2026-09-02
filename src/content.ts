@@ -253,19 +253,20 @@ export const projects: Project[] = [
   {
     name: 'RISC-V RV32I Core',
     accent: 'lime',
-    year: '2021',
-    blurb: 'A machine-mode RV32I core in Verilog, written block by block.',
-    detail: `Sixteen blocks — ALU, decoder, integer file, immediate generator
-      and adder, branch unit, load and store units, the pipeline registers and
-      the muxes — each built as its own design, then wired into one top module.
-      It traps properly rather than just executing: ecall, ebreak, illegal
-      instructions and misaligned access all raise exceptions, mret returns from
-      them, and the CSR file covers mstatus, misa, mie, mip, mtvec, mscratch,
-      mepc, mcause, mtval, mcycle and minstret. Around 3,200 lines of Verilog,
-      simulated and synthesised on Vivado. The machine counter — the block
-      behind mcycle and minstret — came with the course; the rest I wrote. It's
-      why I still reach for a waveform viewer when something misbehaves.`,
-    stack: ['Verilog HDL', 'RV32I', 'VLSI', 'Xilinx Vivado'],
+    year: '2021 · 2026',
+    blurb: 'A machine-mode RV32I core in Verilog, and the six bugs I found when I finally tested it.',
+    detail: `Twenty-nine modules — ALU, decoder, integer file, immediate generator
+      and adder, branch and load/store units, the pipeline registers, and a CSR file
+      built one register at a time — wired into a three-stage pipeline. It traps
+      rather than just executing: ecall, ebreak, illegal instructions and misaligned
+      access all raise exceptions, and mret returns from them. The machine counter
+      came with the course; the rest I wrote. Reopening it in 2026 I found it had
+      never actually been run — there was no testbench anywhere. Rebuilding it under
+      Icarus Verilog, with nine self-checking RV32I programs and an assembler to
+      build them, turned up six real bugs: interrupts that could never fire, an
+      inverted CSR decode, a trap cause latched where nothing could read it.`,
+    stack: ['Verilog HDL', 'RV32I', 'VLSI', 'Icarus Verilog', 'Xilinx Vivado'],
+    repo: 'https://github.com/Vivek2998/riscv-rv32i-core',
   },
   {
     name: 'personal_portfolio',
