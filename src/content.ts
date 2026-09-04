@@ -265,7 +265,7 @@ export const projects: Project[] = [
       came with the course; the rest I wrote. Reopening it in 2026 I found it had
       never actually been run — there was no testbench anywhere. Rebuilding it under
       Icarus Verilog, with nine self-checking RV32I programs and an assembler to
-      build them, turned up six real bugs: interrupts that could never fire, an
+      build them, turned up seven real bugs: interrupts that could never fire, an
       inverted CSR decode, a trap cause latched where nothing could read it.`,
     stack: ['Verilog HDL', 'RV32I', 'VLSI', 'Icarus Verilog', 'Xilinx Vivado'],
     repo: 'https://github.com/Vivek2998/riscv-rv32i-core',
