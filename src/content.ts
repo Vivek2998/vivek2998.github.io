@@ -125,7 +125,7 @@ export const journey: TimelineEntry[] = [
       ones that go to hospitals, so a defect I miss is not a bug report.`,
   },
   {
-    period: 'Mar 2023 — Dec 2023',
+    period: 'Jul 2023 — Dec 2023',
     title: 'Software Developer',
     org: 'Opkey',
     kind: 'work',
